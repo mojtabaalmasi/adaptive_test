@@ -46,7 +46,7 @@ def next_question():
     conn.close()
 
     # سوالاتی که هنوز پرسیده نشده
-    remaining_questions = [q for q in questions if q['id'] not in asked]
+    remaining_questions = [q for q in questions if int(q['id']) not in asked]
 
     if request.method == "POST":
         selected = request.form.get("answer")
