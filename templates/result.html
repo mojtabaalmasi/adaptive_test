@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نتیجه آزمون</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>نتیجه آزمون</h1>
+        <p>تعداد پاسخ‌های صحیح: {{ score }} از {{ total }}</p>
+        <p>برآورد سطح توانایی (θ): {{ "%.2f"|format(theta) }}</p>
+        <a href="{{ url_for('index') }}" class="btn">بازگشت به صفحه اصلی</a>
+    </div>
+</body>
+</html>

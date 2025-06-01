@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سوال آزمون</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>سطح توانایی فعلی: {{ "%.2f"|format(theta) }}</h2>
+        <form method="POST" action="{{ url_for('next_question') }}">
+            <p>{{ question['text'] }}</p>
+            <input type="hidden" name="question_id" value="{{ question['id'] }}">
+            <label><input type="radio" name="answer" value="a" required> {{ question['option_a'] }}</label><br>
+            <label><input type="radio" name="answer" value="b"> {{ question['option_b'] }}</label><br>
+            <label><input type="radio" name="answer" value="c"> {{ question['option_c'] }}</label><br>
+            <label><input type="radio" name="answer" value="d"> {{ question['option_d'] }}</label><br>
+            <button type="submit" class="btn">ارسال پاسخ</button>
+        </form>
+    </div>
+</body>
+</html>
