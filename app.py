@@ -70,7 +70,7 @@ def next_question():
     max_info = -1
     next_q = None
     for q in remaining_questions:
-        info = fisher_information(theta, q['a'], q['b'])
+        info = fisher_information(theta, float(q['a']), float(q['b']))
         if info > max_info:
             max_info = info
             next_q = q
@@ -94,7 +94,7 @@ def result():
     for q in questions:
         qid = q['id']
         if qid in answers:
-            if answers[qid] == q['correct_option']:
+            if str(answers[qid]) == str(q['correct_option']):
                 score += 1
 
     return render_template("result.html", score=score, total=total, theta=theta)
