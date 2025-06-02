@@ -33,49 +33,64 @@ def start():
     return redirect(url_for("next_question"))
 
 @app.route("/question", methods=["GET", "POST"])
+@app.route("/question", methods=["GET", "POST"])
 def next_question():
     if 'theta' not in session:
         return redirect(url_for("index"))
 
-    theta = session['theta']
-    answers = session['answers']
-    asked = session['asked']
+    theta = float(session['theta'])
+    answers = session.get('answers', {})
+    asked = session.get('asked', [])
 
     conn = get_db_connection()
     questions = conn.execute("SELECT * FROM questions").fetchall()
     conn.close()
 
-    # سوالاتی که هنوز پرسیده نشده
-    remaining_questions = [q for q in questions if int(q['id']) not in asked]
+    # تبدیل آیدی‌های سوالات پرسیده‌شده به عدد صحیح
+    asked_ids = [int(qid) for qid in asked]
+    remaining_questions = [q for q in questions if int(q['id']) not in asked_ids]
 
+    # اگر کاربر در حال پاسخ‌دهی به یک سؤال است
     if request.method == "POST":
         selected = request.form.get("answer")
         qid = int(request.form.get("question_id"))
 
-        # ذخیره پاسخ
         answers[qid] = selected
-        asked.append(qid)
+        if qid not in asked_ids:
+            asked.append(qid)
 
-        # به‌روزرسانی برآورد توانایی با روش ساده MLE مدل 1PL
-        # برای مدل دقیق تر می‌توان توابع پیچیده‌تر را استفاده کرد
+        # محاسبه توانایی (theta) جدید
         theta = estimate_theta(answers, questions)
         session['theta'] = theta
         session['answers'] = answers
         session['asked'] = asked
 
-    if len(remaining_questions) == 0:
+        # به‌روزرسانی لیست باقی‌مانده
+        remaining_questions = [q for q in questions if int(q['id']) not in asked]
+
+    # اگر سوالی باقی نمانده
+    if not remaining_questions:
         return redirect(url_for("result"))
 
-    # انتخاب سوال بعدی بر اساس بیشترین اطلاعات (Fisher Information)
+    # انتخاب سؤال بعدی با بیشترین اطلاعات Fisher
     max_info = -1
     next_q = None
     for q in remaining_questions:
-        info = fisher_information(theta, float(q['a']), float(q['b']))
-        if info > max_info:
-            max_info = info
-            next_q = q
+        try:
+            a = float(q['a'])
+            b = float(q['b'])
+            info = fisher_information(theta, a, b)
+            if info > max_info:
+                max_info = info
+                next_q = q
+        except:
+            continue  # در صورت بروز خطا در تبدیل مقادیر، از این سوال عبور کن
+
+    if next_q is None:
+        return redirect(url_for("result"))
 
     return render_template("test.html", question=next_q, theta=theta)
+
 
 @app.route("/result")
 def result():
