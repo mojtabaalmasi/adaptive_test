@@ -190,36 +190,35 @@ if ans:
 else:
     responses.append(0)
 
+   responses = session.get('responses', [])
+    asked = session.get('asked_questions', [])
+    theta = session.get('theta', 0.0)
 
-        responses = session.get('responses', [])
-        asked = session.get('asked_questions', [])
-        theta = session.get('theta', 0.0)
+    responses.append(int(ans))
+    asked.append(current_q['id'])
 
-        responses.append(int(ans))
-        asked.append(current_q['id'])
+    item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
+    theta = estimate_theta_mle(responses, item_params)
 
-        item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
-        theta = estimate_theta_mle(responses, item_params)
+    session['theta'] = theta
+    session['responses'] = responses
+    session['asked_questions'] = asked
 
-        session['theta'] = theta
-        session['responses'] = responses
-        session['asked_questions'] = asked
+    next_q = select_next_question(theta, questions, asked)
+    if next_q is None:
+        session['current_question'] = None
 
-        next_q = select_next_question(theta, questions, asked)
-        if next_q is None:
-            session['current_question'] = None
+        # ذخیره نمودارها و فایل‌ها
+        plot_icc(item_params, os.path.join(OUTPUT_FOLDER, 'icc.png'))
+        plot_item_information(item_params, os.path.join(OUTPUT_FOLDER, 'item_info.png'))
+        save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
+        save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
 
-            # ذخیره نمودارها و فایل‌ها
-            plot_icc(item_params, os.path.join(OUTPUT_FOLDER, 'icc.png'))
-            plot_item_information(item_params, os.path.join(OUTPUT_FOLDER, 'item_info.png'))
-            save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
-            save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
+        return redirect(url_for('results'))
 
-            return redirect(url_for('results'))
-
-        session['current_question'] = next_q
-        step_number = len(asked) + 1
-        return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
+    session['current_question'] = next_q
+    step_number = len(asked) + 1
+    return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
 
     return redirect(url_for('index'))
 
