@@ -2,32 +2,73 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>نتایج آزمون</title>
+    <title>نتیجه آزمون انطباقی</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            direction: rtl;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        h2 {
+            color: #2c3e50;
+        }
+
+        .result-box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin: auto;
+            max-width: 600px;
+        }
+
+        .images img {
+            max-width: 90%;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        .download-links a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 16px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .download-links a:hover {
+            background-color: #2980b9;
+        }
+    </style>
 </head>
 <body>
-    <h2>نتایج آزمون انطباقی</h2>
+    <div class="result-box">
+        <h2>کارنامه آزمون انطباقی شما</h2>
 
-    <h3>اطلاعات آزمون‌دهنده</h3>
-    <ul>
-        <li><strong>نام:</strong> {{ session.get('name') }}</li>
-        <li><strong>شماره تماس:</strong> {{ session.get('phone') }}</li>
-        <li><strong>رشته تحصیلی:</strong> {{ session.get('major') }}</li>
-    </ul>
+        <p><strong>نام:</strong> {{ session['name'] }}</p>
+        <p><strong>رشته تحصیلی:</strong> {{ session['major'] }}</p>
+        <p><strong>شماره تماس:</strong> {{ session['phone'] }}</p>
+        <p><strong>تعداد سؤالات پاسخ‌داده‌شده:</strong> {{ session['num_questions_answered'] }}</p>
+        <p><strong>توانایی تخمینی (θ):</strong> {{ theta | round(2) }}</p>
 
-    <h3>توانایی تخمینی (θ):</h3>
-    <p style="font-size: 1.5em;">{{ theta }}</p>
+        <div class="images">
+            <h4>نمودارهای تحلیلی</h4>
+            <img src="{{ icc_image }}" alt="نمودار ICC">
+            <img src="{{ info_image }}" alt="نمودار اطلاعات آیتم‌ها">
+        </div>
 
-    <h3>نمودار تابع مشخصه سؤالات (ICC)</h3>
-    <img src="{{ icc_image }}" alt="نمودار ICC" width="600">
-
-    <h3>نمودار اطلاعات آزمون</h3>
-    <img src="{{ info_image }}" alt="نمودار اطلاعات" width="600">
-
-    <h3>دانلود کارنامه:</h3>
-    <ul>
-        <li><a href="{{ excel_file }}">فایل Excel</a></li>
-        <li><a href="{{ word_file }}">فایل Word</a></li>
-    </ul>
+        <div class="download-links">
+            <h4>دانلود نتایج</h4>
+            <a href="{{ excel_file }}" download>دانلود فایل Excel</a>
+            <a href="{{ word_file }}" download>دانلود فایل Word</a>
+        </div>
+    </div>
 </body>
 </html>

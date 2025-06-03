@@ -1,35 +1,91 @@
-body {
-    font-family: Tahoma, sans-serif;
-    background-color: #f7f9fc;
-    direction: rtl;
-    padding: 20px;
-}
-.container {
-    max-width: 600px;
-    margin: 40px auto;
-    background: white;
-    padding: 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    border-radius: 8px;
-}
-h1, h2 {
-    color: #333;
-}
-.btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 16px;
-    display: inline-block;
-    margin-top: 10px;
-}
-.btn:hover {
-    background-color: #45a049;
-}
-label {
-    font-size: 16px;
-}
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>آزمون انطباقی مرحله‌ای</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #eef2f7;
+            color: #333;
+            direction: rtl;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .question-box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin: auto;
+            max-width: 600px;
+        }
+
+        h2 {
+            color: #2c3e50;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin: 1rem 0 2rem;
+        }
+
+        label {
+            display: block;
+            font-size: 1rem;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            margin-left: 10px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .progress-info {
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="question-box">
+        <h2>مرحله {{ step_number }}</h2>
+        <p class="progress-info">تعداد سؤالات پاسخ‌داده‌شده: {{ step_number - 1 }}</p>
+
+        <form method="POST">
+            <div class="question-text">{{ question.text }}</div>
+
+            <label>
+                <input type="radio" name="answer" value="1" required>
+                صحیح
+            </label>
+            <label>
+                <input type="radio" name="answer" value="0">
+                غلط
+            </label>
+
+            <button type="submit">ثبت پاسخ و ادامه</button>
+        </form>
+    </div>
+
+</body>
+</html>
