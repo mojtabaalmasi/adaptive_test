@@ -9,6 +9,9 @@ from irt import (
     save_results_to_excel,
     save_results_to_word
 )
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -35,6 +38,7 @@ def index():
 def test():
     questions = load_questions()
 
+    # مرحله ورود اطلاعات اولیه کاربر
     if request.method == 'POST' and 'name' in request.form:
         session['name'] = request.form['name']
         session['phone'] = request.form['phone']
@@ -42,25 +46,40 @@ def test():
         session['responses'] = []
         session['asked_questions'] = []
         session['question_index'] = 0
-        return render_template('test.html', questions=[questions[0]], step_number=1, total_steps='?')
+        # نمایش اولین سوال
+        return render_template('test.html', questions=[questions[0]], step_number=1, total_steps=len(questions))
 
+    # مرحله پاسخگویی به سوالات
     elif request.method == 'POST':
         responses = session.get('responses', [])
         asked = session.get('asked_questions', [])
         index = session.get('question_index', 0)
 
-        q_id = load_questions()[index]['id']
+        # دریافت id سوال فعلی
+        current_question = questions[index]
+        q_id = current_question['id']
+
+        # دریافت پاسخ کاربر به سوال فعلی
         ans = request.form.get(f'q{q_id}')
-        responses.append(int(ans) if ans == '1' else 0)
+        if ans not in ['0', '1']:
+            # اگر پاسخ داده نشده یا اشتباه است، دوباره سوال را نشان بده
+            return render_template('test.html', questions=[current_question], step_number=index+1, total_steps=len(questions), error="لطفا به سوال پاسخ دهید.")
+
+        responses.append(int(ans))
         asked.append(q_id)
 
-        index += 1
+        index += 1  # رفتن به سوال بعدی
+
+        # به‌روزرسانی session
+        session['responses'] = responses
+        session['asked_questions'] = asked
+        session['question_index'] = index
+
         if index < len(questions):
-            session['responses'] = responses
-            session['asked_questions'] = asked
-            session['question_index'] = index
+            # اگر هنوز سوال باقی است، سوال بعدی را نشان بده
             return render_template('test.html', questions=[questions[index]], step_number=index+1, total_steps=len(questions))
         else:
+            # اگر سوالات تمام شدند، محاسبات و نمودارها را انجام بده و به صفحه نتایج برو
             item_params = [(q['a'], q['b'], q['c']) for q in questions]
             theta = estimate_theta_mle(responses, item_params)
             session['theta'] = theta
@@ -72,6 +91,7 @@ def test():
 
             return redirect(url_for('results'))
 
+    # اگر کاربر مستقیم به این آدرس با GET آمد، برگرد به صفحه اصلی
     return redirect(url_for('index'))
 
 @app.route('/results')
@@ -91,7 +111,6 @@ def results():
         )
     except Exception as e:
         return f"Error in results route: {e}"
-
 
 @app.route('/download/<filename>')
 def download_file(filename):
