@@ -158,6 +158,7 @@ def index():
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
+    try:
     questions = load_questions()
 
     if request.method == 'POST' and 'name' in request.form:
@@ -223,6 +224,10 @@ def test():
 
     # اگر روش درخواست GET بود یا حالت دیگری داشت به صفحه اصلی بازگرد
     return redirect(url_for('index'))
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())  # چاپ خطای کامل در کنسول
+        return f"خطا در سرور: {str(e)}"
 
 
 @app.route('/results')
