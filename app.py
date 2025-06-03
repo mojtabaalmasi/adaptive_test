@@ -159,75 +159,76 @@ def index():
 @app.route('/test', methods=['GET', 'POST'])
 def test():
     try:
-    questions = load_questions()
+        questions = load_questions()
 
-    if request.method == 'POST' and 'name' in request.form:
-        # شروع آزمون با دریافت نام و اطلاعات اولیه
-        session['name'] = request.form['name']
-        session['phone'] = request.form['phone']
-        session['major'] = request.form['major']
-        session['responses'] = []
-        session['asked_questions'] = []
-        session['theta'] = 0.0
+        if request.method == 'POST' and 'name' in request.form:
+            # شروع آزمون با دریافت نام و اطلاعات اولیه
+            session['name'] = request.form['name']
+            session['phone'] = request.form['phone']
+            session['major'] = request.form['major']
+            session['responses'] = []
+            session['asked_questions'] = []
+            session['theta'] = 0.0
 
-        first_q = select_next_question(0.0, questions, [])
-        if first_q is None:
-            return "هیچ سوالی برای آزمون وجود ندارد."
-        session['current_question'] = first_q
-        return render_template('test.html', questions=[first_q], step_number=1, total_steps='نامشخص')
+            first_q = select_next_question(0.0, questions, [])
+            if first_q is None:
+                return "هیچ سوالی برای آزمون وجود ندارد."
+            session['current_question'] = first_q
+            return render_template('test.html', questions=[first_q], step_number=1, total_steps='نامشخص')
 
-    elif request.method == 'POST':
-        current_q = session.get('current_question', None)
-        if current_q is None:
-            return redirect(url_for('index'))
+        elif request.method == 'POST':
+            current_q = session.get('current_question', None)
+            if current_q is None:
+                return redirect(url_for('index'))
 
-        ans = request.form.get(f'q{current_q["id"]}')
-        if ans is None:
-            return "لطفا یک پاسخ انتخاب کنید."
+            ans = request.form.get(f'q{current_q["id"]}')
+            if ans is None:
+                return "لطفا یک پاسخ انتخاب کنید."
 
-        # دریافت پاسخ و به‌روزرسانی داده‌ها
-        responses = session.get('responses', [])
-        asked = session.get('asked_questions', [])
-        theta = session.get('theta', 0.0)
+            # دریافت پاسخ و به‌روزرسانی داده‌ها
+            responses = session.get('responses', [])
+            asked = session.get('asked_questions', [])
+            theta = session.get('theta', 0.0)
 
-        # ذخیره پاسخ (به صورت عددی)
-        responses.append(int(ans))
-        asked.append(current_q['id'])
+            # ذخیره پاسخ (به صورت عددی)
+            responses.append(int(ans))
+            asked.append(current_q['id'])
 
-        # پارامترهای سوالات پرسیده شده
-        item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
+            # پارامترهای سوالات پرسیده شده
+            item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
 
-        # برآورد توانایی با MLE
-        theta = estimate_theta_mle(responses, item_params)
+            # برآورد توانایی با MLE
+            theta = estimate_theta_mle(responses, item_params)
 
-        # ذخیره در سشن
-        session['theta'] = theta
-        session['responses'] = responses
-        session['asked_questions'] = asked
+            # ذخیره در سشن
+            session['theta'] = theta
+            session['responses'] = responses
+            session['asked_questions'] = asked
 
-        # انتخاب سوال بعدی
-        next_q = select_next_question(theta, questions, asked)
-        if next_q is None:
-            session['current_question'] = None
+            # انتخاب سوال بعدی
+            next_q = select_next_question(theta, questions, asked)
+            if next_q is None:
+                session['current_question'] = None
 
-            # ذخیره نمودارها و فایل‌ها
-            plot_icc(item_params, os.path.join(OUTPUT_FOLDER, 'icc.png'))
-            plot_item_information(item_params, os.path.join(OUTPUT_FOLDER, 'item_info.png'))
-            save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
-            save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
+                # ذخیره نمودارها و فایل‌ها
+                plot_icc(item_params, os.path.join(OUTPUT_FOLDER, 'icc.png'))
+                plot_item_information(item_params, os.path.join(OUTPUT_FOLDER, 'item_info.png'))
+                save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
+                save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
 
-            return redirect(url_for('results'))
+                return redirect(url_for('results'))
 
-        session['current_question'] = next_q
-        step_number = len(asked) + 1
-        return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
+            session['current_question'] = next_q
+            step_number = len(asked) + 1
+            return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
 
-    # اگر روش درخواست GET بود یا حالت دیگری داشت به صفحه اصلی بازگرد
-    return redirect(url_for('index'))
+        # اگر روش درخواست GET بود یا حالت دیگری داشت به صفحه اصلی بازگرد
+        return redirect(url_for('index'))
+    
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())  # چاپ خطای کامل در کنسول
-        return f"خطا در سرور: {str(e)}"
+    import traceback
+    print(traceback.format_exc())  # چاپ خطای کامل در کنسول
+    return f"خطا در سرور: {str(e)}"
 
 
 @app.route('/results')
