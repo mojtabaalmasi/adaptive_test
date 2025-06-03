@@ -1,91 +1,90 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <title>آزمون انطباقی مرحله‌ای</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: #eef2f7;
-            color: #333;
-            direction: rtl;
-            text-align: center;
-            padding: 2rem;
-        }
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+}
 
-        .question-box {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            margin: auto;
-            max-width: 600px;
-        }
+.container {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 30px;
+    border-radius: 20px;
+    max-width: 500px;
+    margin: 50px auto;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
 
-        h2 {
-            color: #2c3e50;
-        }
+h2 {
+    margin-bottom: 25px;
+}
 
-        .question-text {
-            font-size: 1.2rem;
-            margin: 1rem 0 2rem;
-        }
+p {
+    font-size: 1.2rem;
+    margin: 20px 0 10px;
+}
 
-        label {
-            display: block;
-            font-size: 1rem;
-            margin: 8px 0;
-            cursor: pointer;
-        }
+label {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    text-align: right;
+}
 
-        input[type="radio"] {
-            margin-left: 10px;
-        }
+input[type="radio"] {
+    margin-left: 10px;
+}
 
-        button {
-            margin-top: 20px;
-            padding: 12px 20px;
-            font-size: 1rem;
-            background-color: #3498db;
-            border: none;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-        }
+button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    background-color: #38b6ff;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
 
-        button:hover {
-            background-color: #2980b9;
-        }
+button:hover {
+    background-color: #1d9bf0;
+}
 
-        .progress-info {
-            margin-bottom: 10px;
-            color: #555;
-            font-size: 0.95rem;
-        }
-    </style>
-</head>
-<body>
+.end-message {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #ffe;
+}
 
-    <div class="question-box">
-        <h2>مرحله {{ step_number }}</h2>
-        <p class="progress-info">تعداد سؤالات پاسخ‌داده‌شده: {{ step_number - 1 }}</p>
+.results-button {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #00d084;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
 
-        <form method="POST">
-            <div class="question-text">{{ question.text }}</div>
+.results-button:hover {
+    background-color: #00a66e;
+}
 
-            <label>
-                <input type="radio" name="answer" value="1" required>
-                صحیح
-            </label>
-            <label>
-                <input type="radio" name="answer" value="0">
-                غلط
-            </label>
+@media screen and (max-width: 480px) {
+    .container {
+        padding: 20px;
+        margin: 20px;
+    }
 
-            <button type="submit">ثبت پاسخ و ادامه</button>
-        </form>
-    </div>
-
-</body>
-</html>
+    p, label {
+        font-size: 1rem;
+    }
+}

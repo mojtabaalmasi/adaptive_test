@@ -1,74 +1,17 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <title>نتیجه آزمون انطباقی</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            direction: rtl;
-            text-align: center;
-            padding: 2rem;
-        }
+@app.route('/results')
+def results():
+    try:
+        theta = session.get('theta', None)
+        if theta is None:
+            return redirect(url_for('index'))
 
-        h2 {
-            color: #2c3e50;
-        }
-
-        .result-box {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            margin: auto;
-            max-width: 600px;
-        }
-
-        .images img {
-            max-width: 90%;
-            margin: 1rem 0;
-            border-radius: 8px;
-        }
-
-        .download-links a {
-            display: inline-block;
-            margin: 10px;
-            padding: 10px 16px;
-            background-color: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-
-        .download-links a:hover {
-            background-color: #2980b9;
-        }
-    </style>
-</head>
-<body>
-    <div class="result-box">
-        <h2>کارنامه آزمون انطباقی شما</h2>
-
-        <p><strong>نام:</strong> {{ session['name'] }}</p>
-        <p><strong>رشته تحصیلی:</strong> {{ session['major'] }}</p>
-        <p><strong>شماره تماس:</strong> {{ session['phone'] }}</p>
-        <p><strong>تعداد سؤالات پاسخ‌داده‌شده:</strong> {{ session['num_questions_answered'] }}</p>
-        <p><strong>توانایی تخمینی (θ):</strong> {{ theta | round(2) }}</p>
-
-        <div class="images">
-            <h4>نمودارهای تحلیلی</h4>
-            <img src="{{ icc_image }}" alt="نمودار ICC">
-            <img src="{{ info_image }}" alt="نمودار اطلاعات آیتم‌ها">
-        </div>
-
-        <div class="download-links">
-            <h4>دانلود نتایج</h4>
-            <a href="{{ excel_file }}" download>دانلود فایل Excel</a>
-            <a href="{{ word_file }}" download>دانلود فایل Word</a>
-        </div>
-    </div>
-</body>
-</html>
+        return render_template(
+            'results.html',
+            theta=theta,
+            icc_image=url_for('static', filename='icc.png'),
+            info_image=url_for('static', filename='item_info.png'),
+            excel_file=url_for('static', filename='results.xlsx'),
+            word_file=url_for('static', filename='results.docx'),
+        )
+    except Exception as e:
+        return f"Error in results route: {e}"

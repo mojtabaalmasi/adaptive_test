@@ -74,20 +74,24 @@ def test():
 
     return redirect(url_for('index'))
 
-@app.route('/results')
+@@app.route('/results')
 def results():
-    theta = session.get('theta', None)
-    if theta is None:
-        return redirect(url_for('index'))
+    try:
+        theta = session.get('theta', None)
+        if theta is None:
+            return redirect(url_for('index'))
 
-    return render_template(
-        'results.html',
-        theta=theta,
-        icc_image=url_for('static', filename='icc.png'),
-        info_image=url_for('static', filename='item_info.png'),
-        excel_file=url_for('static', filename='results.xlsx'),
-        word_file=url_for('static', filename='results.docx'),
-    )
+        return render_template(
+            'results.html',
+            theta=theta,
+            icc_image=url_for('static', filename='icc.png'),
+            info_image=url_for('static', filename='item_info.png'),
+            excel_file=url_for('static', filename='results.xlsx'),
+            word_file=url_for('static', filename='results.docx'),
+        )
+    except Exception as e:
+        return f"Error in results route: {e}"
+
 
 @app.route('/download/<filename>')
 def download_file(filename):
