@@ -33,7 +33,7 @@ def index():
     questions = load_questions()
     return render_template('index.html', num_questions=len(questions))
 
-@@app.route('/test', methods=['GET', 'POST'])
+@app.route('/test', methods=['GET', 'POST'])
 def test():
     questions = load_questions()
 
