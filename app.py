@@ -51,28 +51,50 @@ def index():
 def test():
     questions = load_questions()
 
-    if request.method == 'POST':
-        name = request.form.get('name')
-        phone = request.form.get('phone')
-        major = request.form.get('major')
+    # مرحله اول: ورود اطلاعات اولیه
+    if request.method == 'POST' and 'name' in request.form:
+        session['name'] = request.form['name']
+        session['phone'] = request.form['phone']
+        session['major'] = request.form['major']
+        session['responses'] = []
+        session['asked_questions'] = []
+        session['question_index'] = 0
+        return render_template('test.html', questions=[questions[0]], step_number=1, total_steps='?')
 
-        if name and phone and major:
-            session['name'] = name
-            session['phone'] = phone
-            session['major'] = major
-            session['responses'] = []
-            session['asked_questions'] = []
-            return render_template('test.html', questions=[questions[0]], step_number=1)
+    # مرحله دوم: پاسخ به سؤال
+    elif request.method == 'POST' and 'q0' in request.form:
+        responses = session.get('responses', [])
+        asked = session.get('asked_questions', [])
+        index = session.get('question_index', 0)
 
-        elif 'q1' in request.form:
-            # یعنی مرحله پاسخ‌دهی به سؤال است
-            # کد ادامه آزمون مرحله‌ای اینجاست...
-            pass
+        # ذخیره پاسخ فعلی
+        q_id = questions[index]['id']
+        ans = request.form.get(f'q{q_id}')
+        responses.append(int(ans) if ans == '1' else 0)
+        asked.append(q_id)
 
+        # برو به سؤال بعدی اگر باقی‌مانده
+        index += 1
+        if index < len(questions):
+            session['responses'] = responses
+            session['asked_questions'] = asked
+            session['question_index'] = index
+            return render_template('test.html', questions=[questions[index]], step_number=index+1, total_steps=len(questions))
         else:
-            return "درخواست نامعتبر یا ناقص ارسال شده است.", 400
+            # آزمون تمام شده
+            item_params = [(q['a'], q['b'], q['c']) for q in questions]
+            theta = estimate_theta_mle(responses, item_params)
+            session['theta'] = theta
+
+            plot_icc(item_params, save_path=os.path.join(OUTPUT_FOLDER, 'icc.png'))
+            plot_item_information(item_params, save_path=os.path.join(OUTPUT_FOLDER, 'item_info.png'))
+            save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
+            save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
+
+            return redirect(url_for('results'))
 
     return redirect(url_for('index'))
+
 
 
 @app.route('/results')
