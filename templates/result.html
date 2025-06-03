@@ -1,16 +1,33 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>نتیجه آزمون</title>
+    <title>نتایج آزمون</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>نتیجه آزمون</h1>
-        <p>تعداد پاسخ‌های صحیح: {{ score }} از {{ total }}</p>
-        <p>برآورد سطح توانایی (θ): {{ "%.2f"|format(theta) }}</p>
-        <a href="{{ url_for('index') }}" class="btn">بازگشت به صفحه اصلی</a>
-    </div>
+    <h2>نتایج آزمون انطباقی</h2>
+
+    <h3>اطلاعات آزمون‌دهنده</h3>
+    <ul>
+        <li><strong>نام:</strong> {{ session.get('name') }}</li>
+        <li><strong>شماره تماس:</strong> {{ session.get('phone') }}</li>
+        <li><strong>رشته تحصیلی:</strong> {{ session.get('major') }}</li>
+    </ul>
+
+    <h3>توانایی تخمینی (θ):</h3>
+    <p style="font-size: 1.5em;">{{ theta }}</p>
+
+    <h3>نمودار تابع مشخصه سؤالات (ICC)</h3>
+    <img src="{{ icc_image }}" alt="نمودار ICC" width="600">
+
+    <h3>نمودار اطلاعات آزمون</h3>
+    <img src="{{ info_image }}" alt="نمودار اطلاعات" width="600">
+
+    <h3>دانلود کارنامه:</h3>
+    <ul>
+        <li><a href="{{ excel_file }}">فایل Excel</a></li>
+        <li><a href="{{ word_file }}">فایل Word</a></li>
+    </ul>
 </body>
 </html>

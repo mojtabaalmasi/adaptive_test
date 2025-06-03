@@ -1,118 +1,90 @@
-from flask import Flask, render_template, request, session, redirect, url_for
-from irt import irt_1pl, estimate_theta, fisher_information
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+import os
 import sqlite3
-import math
+
+from irt import (
+    estimate_theta_mle,
+    plot_icc,
+    plot_item_information,
+    save_results_to_excel,
+    save_results_to_word
+)
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"
+app.secret_key = 'your_secret_key_here'
 
-DATABASE = "questions.db"
+DB_PATH = 'questions.db'
+OUTPUT_FOLDER = os.path.join(os.getcwd(), 'static')
+if not os.path.exists(OUTPUT_FOLDER):
+    os.makedirs(OUTPUT_FOLDER)
 
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def get_questions():
-    conn = get_db_connection()
-    questions = conn.execute("SELECT * FROM questions").fetchall()
+# خواندن سؤال‌ها و پارامترهای IRT از دیتابیس
+def load_questions():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, text, a, b, c FROM questions")
+    rows = cursor.fetchall()
     conn.close()
+    questions = [{'id': row[0], 'text': row[1], 'a': row[2], 'b': row[3], 'c': row[4]} for row in rows]
     return questions
 
-@app.route("/")
+@app.route('/')
 def index():
-    session.clear()
-    return render_template("index.html")
+    questions = load_questions()
+    return render_template('index.html', num_questions=len(questions))
 
-@app.route("/start")
-def start():
-    session.clear()
-    session['theta'] = 0.0
-    session['answers'] = {}
-    session['asked'] = []
-    return redirect(url_for("next_question"))
+@@app.route('/test', methods=['GET', 'POST'])
+def test():
+    questions = load_questions()
 
-@app.route("/question", methods=["GET", "POST"])
-@app.route("/question", methods=["GET", "POST"])
-def next_question():
-    if 'theta' not in session:
-        return redirect(url_for("index"))
+    if request.method == 'POST' and 'name' in request.form:
+        # مرحله ثبت‌نام
+        session['name'] = request.form['name']
+        session['phone'] = request.form['phone']
+        session['major'] = request.form['major']
+        return render_template('test.html', questions=questions)
 
-    theta = float(session['theta'])
-    answers = session.get('answers', {})
-    asked = session.get('asked', [])
+    elif request.method == 'POST':
+        # مرحله پاسخ‌دهی به سوالات
+        responses = []
+        for q in questions:
+            ans = request.form.get(f"q{q['id']}")
+            responses.append(1 if ans == '1' else 0)
 
-    conn = get_db_connection()
-    questions = conn.execute("SELECT * FROM questions").fetchall()
-    conn.close()
+        item_params = [(q['a'], q['b'], q['c']) for q in questions]
+        theta = estimate_theta_mle(responses, item_params)
 
-    # تبدیل آیدی‌های سوالات پرسیده‌شده به عدد صحیح
-    asked_ids = [int(qid) for qid in asked]
-    remaining_questions = [q for q in questions if int(q['id']) not in asked_ids]
-
-    # اگر کاربر در حال پاسخ‌دهی به یک سؤال است
-    if request.method == "POST":
-        selected = request.form.get("answer")
-        qid = int(request.form.get("question_id"))
-
-        answers[qid] = selected
-        if qid not in asked_ids:
-            asked.append(qid)
-
-        # محاسبه توانایی (theta) جدید
-        theta = estimate_theta(answers, questions)
+        session['responses'] = responses
         session['theta'] = theta
-        session['answers'] = answers
-        session['asked'] = asked
 
-        # به‌روزرسانی لیست باقی‌مانده
-        remaining_questions = [q for q in questions if int(q['id']) not in asked]
+        plot_icc(item_params, save_path=os.path.join(OUTPUT_FOLDER, 'icc.png'))
+        plot_item_information(item_params, save_path=os.path.join(OUTPUT_FOLDER, 'item_info.png'))
+        save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
+        save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
 
-    # اگر سوالی باقی نمانده
-    if not remaining_questions:
-        return redirect(url_for("result"))
+        return redirect(url_for('results'))
 
-    # انتخاب سؤال بعدی با بیشترین اطلاعات Fisher
-    max_info = -1
-    next_q = None
-    for q in remaining_questions:
-        try:
-            a = float(q['a'])
-            b = float(q['b'])
-            info = fisher_information(theta, a, b)
-            if info > max_info:
-                max_info = info
-                next_q = q
-        except:
-            continue  # در صورت بروز خطا در تبدیل مقادیر، از این سوال عبور کن
-
-    if next_q is None:
-        return redirect(url_for("result"))
-
-    return render_template("test.html", question=next_q, theta=theta)
+    return redirect(url_for('index'))
 
 
-@app.route("/result")
-def result():
-    if 'theta' not in session:
-        return redirect(url_for("index"))
+@app.route('/results')
+def results():
+    theta = session.get('theta', None)
+    if theta is None:
+        return redirect(url_for('index'))
 
-    theta = session['theta']
-    answers = session.get('answers', {})
-    score = 0
-    total = len(answers)
+    return render_template(
+        'results.html',
+        theta=theta,
+        icc_image=url_for('static', filename='icc.png'),
+        info_image=url_for('static', filename='item_info.png'),
+        excel_file=url_for('static', filename='results.xlsx'),
+        word_file=url_for('static', filename='results.docx'),
+    )
 
-    conn = get_db_connection()
-    questions = conn.execute("SELECT * FROM questions").fetchall()
-    conn.close()
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(OUTPUT_FOLDER, filename, as_attachment=True)
 
-    for q in questions:
-        qid = q['id']
-        if qid in answers:
-            if str(answers[qid]) == str(q['correct_option']):
-                score += 1
-
-    return render_template("result.html", score=score, total=total, theta=theta)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
