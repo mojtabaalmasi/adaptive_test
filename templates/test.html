@@ -7,24 +7,21 @@
 </head>
 <body>
     <div class="container">
-        {% if questions %}
-            <h2>مرحله {{ step_number }} از آزمون</h2>
+        <h2>سوال {{ step_number }}</h2>
+        <form method="POST">
+            {% for q in questions %}
+                <p>{{ q.text }}</p>
+                <label><input type="radio" name="q{{ q.id }}" value="1" required> صحیح</label>
+                <label><input type="radio" name="q{{ q.id }}" value="0"> غلط</label>
+            {% endfor %}
+            <button type="submit">ثبت پاسخ</button>
+        </form>
 
-            <form method="POST">
-                {% for q in questions %}
-                    <p>{{ q.text }}</p>
-                    <label><input type="radio" name="q{{ q.id }}" value="1" required> صحیح</label>
-                    <label><input type="radio" name="q{{ q.id }}" value="0"> غلط</label>
-                {% endfor %}
-                <button type="submit">ثبت پاسخ‌ها</button>
-            </form>
-
-        {% else %}
-            <h2>🎉 آزمون شما به پایان رسید!</h2>
-            <p class="result-box">با تشکر از شرکت شما در آزمون انطباقی.</p>
-            <a href="{{ url_for('results') }}">
-                <button>مشاهده نتایج</button>
-            </a>
+        {% if step_number == total_steps %}
+        <div class="end-message">
+            <p>شما به پایان آزمون رسیده‌اید.</p>
+            <a href="{{ url_for('results') }}" class="results-button">مشاهده نتایج</a>
+        </div>
         {% endif %}
     </div>
 </body>
