@@ -226,9 +226,9 @@ def test():
         return redirect(url_for('index'))
     
     except Exception as e:
-    import traceback
-    print(traceback.format_exc())  # چاپ خطای کامل در کنسول
-    return f"خطا در سرور: {str(e)}"
+        import traceback
+        print(traceback.format_exc())  # چاپ خطای کامل در کنسول
+        return f"خطا در سرور: {str(e)}"
 
 
 @app.route('/results')
