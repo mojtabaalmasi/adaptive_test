@@ -129,7 +129,7 @@ def save_results_to_excel(file_path, responses, item_params, theta):
 
     wb.save(file_path)
     
-    def generate_performance_report(responses, item_params, theta):
+def generate_performance_report(responses, item_params, theta):
     easy_correct = 0
     hard_wrong = 0
     total_easy = 0
