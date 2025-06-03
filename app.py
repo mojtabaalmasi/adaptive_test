@@ -161,6 +161,7 @@ def test():
     questions = load_questions()
 
     if request.method == 'POST' and 'name' in request.form:
+        # شروع آزمون با دریافت نام و اطلاعات اولیه
         session['name'] = request.form['name']
         session['phone'] = request.form['phone']
         session['major'] = request.form['major']
@@ -182,45 +183,47 @@ def test():
         ans = request.form.get(f'q{current_q["id"]}')
         if ans is None:
             return "لطفا یک پاسخ انتخاب کنید."
-            
-            ans = request.form.get(f'q{q_id}')
-if ans:
-    is_correct = int(ans) == questions[index]['correct']
-    responses.append(1 if is_correct else 0)
-else:
-    responses.append(0)
 
-   responses = session.get('responses', [])
-    asked = session.get('asked_questions', [])
-    theta = session.get('theta', 0.0)
+        # دریافت پاسخ و به‌روزرسانی داده‌ها
+        responses = session.get('responses', [])
+        asked = session.get('asked_questions', [])
+        theta = session.get('theta', 0.0)
 
-    responses.append(int(ans))
-    asked.append(current_q['id'])
+        # ذخیره پاسخ (به صورت عددی)
+        responses.append(int(ans))
+        asked.append(current_q['id'])
 
-    item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
-    theta = estimate_theta_mle(responses, item_params)
+        # پارامترهای سوالات پرسیده شده
+        item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
 
-    session['theta'] = theta
-    session['responses'] = responses
-    session['asked_questions'] = asked
+        # برآورد توانایی با MLE
+        theta = estimate_theta_mle(responses, item_params)
 
-    next_q = select_next_question(theta, questions, asked)
-    if next_q is None:
-        session['current_question'] = None
+        # ذخیره در سشن
+        session['theta'] = theta
+        session['responses'] = responses
+        session['asked_questions'] = asked
 
-        # ذخیره نمودارها و فایل‌ها
-        plot_icc(item_params, os.path.join(OUTPUT_FOLDER, 'icc.png'))
-        plot_item_information(item_params, os.path.join(OUTPUT_FOLDER, 'item_info.png'))
-        save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
-        save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
+        # انتخاب سوال بعدی
+        next_q = select_next_question(theta, questions, asked)
+        if next_q is None:
+            session['current_question'] = None
 
-        return redirect(url_for('results'))
+            # ذخیره نمودارها و فایل‌ها
+            plot_icc(item_params, os.path.join(OUTPUT_FOLDER, 'icc.png'))
+            plot_item_information(item_params, os.path.join(OUTPUT_FOLDER, 'item_info.png'))
+            save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
+            save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
 
-    session['current_question'] = next_q
-    step_number = len(asked) + 1
-    return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
+            return redirect(url_for('results'))
 
+        session['current_question'] = next_q
+        step_number = len(asked) + 1
+        return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
+
+    # اگر روش درخواست GET بود یا حالت دیگری داشت به صفحه اصلی بازگرد
     return redirect(url_for('index'))
+
 
 @app.route('/results')
 def results():
