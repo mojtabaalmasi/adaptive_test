@@ -44,11 +44,24 @@ def estimate_theta_mle(responses, item_params):
 def load_questions():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, text, a, b, c FROM questions")
+    cursor.execute("""
+        SELECT id, text, a, b, c,
+               option1, option2, option3, option4, correct_option
+        FROM questions
+    """)
     rows = cursor.fetchall()
     conn.close()
-    questions = [{'id': row[0], 'text': row[1], 'a': row[2], 'b': row[3], 'c': row[4]} for row in rows]
+    questions = [{
+        'id': row[0],
+        'text': row[1],
+        'a': float(row[2]),
+        'b': float(row[3]),
+        'c': float(row[4]),
+        'options': [row[5], row[6], row[7], row[8]],
+        'correct': int(row[9])  # مثلاً 1 یعنی گزینه اول صحیح است
+    } for row in rows]
     return questions
+
 
 def select_next_question(theta, questions, asked_ids):
     candidates = [q for q in questions if q['id'] not in asked_ids]
@@ -169,6 +182,14 @@ def test():
         ans = request.form.get(f'q{current_q["id"]}')
         if ans is None:
             return "لطفا یک پاسخ انتخاب کنید."
+            
+            ans = request.form.get(f'q{q_id}')
+if ans:
+    is_correct = int(ans) == questions[index]['correct']
+    responses.append(1 if is_correct else 0)
+else:
+    responses.append(0)
+
 
         responses = session.get('responses', [])
         asked = session.get('asked_questions', [])

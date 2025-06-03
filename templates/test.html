@@ -9,13 +9,18 @@
     <div class="container">
         <h2>سوال {{ step_number }}</h2>
         <form method="POST">
-            {% for q in questions %}
-                <p>{{ q.text }}</p>
-                <label><input type="radio" name="q{{ q.id }}" value="1" required> صحیح</label>
-                <label><input type="radio" name="q{{ q.id }}" value="0"> غلط</label>
-            {% endfor %}
-            <button type="submit">ثبت پاسخ</button>
-        </form>
+  {% for q in questions %}
+    <p>{{ q.text }}</p>
+    {% for i in range(4) %}
+      <label>
+        <input type="radio" name="q{{ q.id }}" value="{{ i+1 }}">
+        {{ q.options[i] }}
+      </label><br>
+    {% endfor %}
+  {% endfor %}
+  <button type="submit">ثبت پاسخ</button>
+</form>
+
 
         {% if step_number == total_steps %}
         <div class="end-message">
