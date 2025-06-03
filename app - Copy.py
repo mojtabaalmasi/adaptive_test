@@ -110,10 +110,7 @@ def results():
             word_file=url_for('static', filename='results.docx'),
         )
     except Exception as e:
-        import traceback
-        tb = traceback.format_exc()
-        return f"<h2>خطا در مسیر results:</h2><pre>{tb}</pre>"
-
+        return f"Error in results route: {e}"
 
 @app.route('/download/<filename>')
 def download_file(filename):
