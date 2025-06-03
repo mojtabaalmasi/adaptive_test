@@ -8,17 +8,14 @@
 <body>
     <h2>مرحله {{ step_number }} از {{ total_steps }}</h2>
 
-    <form action="{{ url_for('test') }}" method="post">
-        <input type="hidden" name="question_id" value="{{ question.id }}">
-        
-        <div class="question">
-            <p><strong>سؤال:</strong> {{ question.text }}</p>
-            <label><input type="radio" name="answer" value="1" required> درست</label><br>
-            <label><input type="radio" name="answer" value="0"> نادرست</label>
-        </div>
+    <form method="POST">
+  {% for q in questions %}
+    <p>{{ q.text }}</p>
+    <label><input type="radio" name="q{{ q.id }}" value="1"> صحیح</label>
+    <label><input type="radio" name="q{{ q.id }}" value="0"> غلط</label>
+  {% endfor %}
+  <button type="submit">ثبت پاسخ‌ها</button>
+</form>
 
-        <br>
-        <button type="submit">ثبت پاسخ و ادامه</button>
-    </form>
 </body>
 </html>

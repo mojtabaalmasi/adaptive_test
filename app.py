@@ -37,12 +37,12 @@ def index():
 def test():
     questions = load_questions()
 
-    if request.method == 'POST' and 'name' in request.form:
-        # مرحله ثبت‌نام
-        session['name'] = request.form['name']
-        session['phone'] = request.form['phone']
-        session['major'] = request.form['major']
-        return render_template('test.html', questions=questions)
+    iif request.method == 'POST' and 'name' in request.form:
+    session['name'] = request.form['name']
+    session['phone'] = request.form['phone']
+    session['major'] = request.form['major']
+    return render_template('test.html', questions=questions)
+
 
     elif request.method == 'POST':
         # مرحله پاسخ‌دهی به سوالات

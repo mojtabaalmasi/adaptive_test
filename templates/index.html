@@ -82,18 +82,14 @@
     <div class="container">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگوی آزمون" class="logo">
         <h2>ورود به آزمون انطباقی</h2>
-        <form action="{{ url_for('test') }}" method="post" onsubmit="playSound()">
-            <label for="name">نام و نام خانوادگی:</label>
-            <input type="text" name="name" id="name" required>
+       <form action="{{ url_for('test') }}" method="POST">
+  <input type="text" name="name" placeholder="نام و نام خانوادگی" required>
+  <input type="text" name="phone" placeholder="شماره تماس" required>
+  <input type="text" name="major" placeholder="رشته تحصیلی" required>
+  <button type="submit">شروع آزمون</button>
+</form>
 
-            <label for="phone">شماره تماس:</label>
-            <input type="tel" name="phone" id="phone" required>
 
-            <label for="major">رشته تحصیلی:</label>
-            <input type="text" name="major" id="major" required>
-
-            <button type="submit">🎧 شروع آزمون</button>
-        </form>
     </div>
 
     <!-- صدا -->
