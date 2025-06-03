@@ -128,11 +128,53 @@ def save_results_to_excel(file_path, responses, item_params, theta):
     ws.cell(row=len(responses)+3, column=2, value=theta)
 
     wb.save(file_path)
+    
+    def generate_performance_report(responses, item_params, theta):
+    easy_correct = 0
+    hard_wrong = 0
+    total_easy = 0
+    total_hard = 0
+
+    for resp, (a, b, c) in zip(responses, item_params):
+        if b < 0:
+            total_easy += 1
+            if resp == 1:
+                easy_correct += 1
+        elif b >= 0:
+            total_hard += 1
+            if resp == 0:
+                hard_wrong += 1
+
+    level = ''
+    if theta > 1:
+        level = 'بسیار بالا'
+    elif theta > 0.5:
+        level = 'بالا'
+    elif theta > -0.5:
+        level = 'متوسط'
+    elif theta > -1.5:
+        level = 'پایین'
+    else:
+        level = 'خیلی پایین'
+
+    text = (
+        f"بر اساس مدل سه‌پارامتری IRT و پاسخ‌های ثبت‌شده، توانایی تخمینی آزمون‌دهنده برابر با θ = {theta:.3f} است، "
+        f"که نشان‌دهنده‌ی سطح توانایی {level} در مقایسه با میانگین گروه مرجع می‌باشد.\n\n"
+        f"آزمون‌دهنده به {easy_correct} سؤال از {total_easy} سؤال ساده (دارای دشواری منفی) پاسخ صحیح داده است، "
+        f"که بیانگر توانایی نسبی در حل آیتم‌های آسان است.\n"
+        f"همچنین آزمون‌دهنده در {hard_wrong} سؤال از {total_hard} سؤال دشوار (دارای دشواری مثبت) پاسخ اشتباه داده است، "
+        f"که طبیعی و مطابق انتظار برای سطح توانایی فعلی او می‌باشد.\n\n"
+        "با توجه به این اطلاعات، پیشنهاد می‌شود آزمون‌دهنده تمرکز خود را بر سؤالات با دشواری متوسط تا بالا افزایش دهد "
+        "و برای بهبود عملکرد از روش‌های تمرینی هدفمند بهره بگیرد."
+    )
+    return text
+
 
 def save_results_to_word(file_path, responses, item_params, theta):
     doc = Document()
     doc.add_heading('گزارش نتایج آزمون', 0)
 
+    # جدول پاسخ‌ها و پارامترها
     table = doc.add_table(rows=1, cols=5)
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'شماره سوال'
@@ -151,7 +193,14 @@ def save_results_to_word(file_path, responses, item_params, theta):
 
     doc.add_paragraph(f"\nتوانایی تخمینی θ: {theta:.3f}")
 
+    # تحلیل عملکرد آزمون‌دهنده
+    doc.add_heading('تحلیل عملکرد آزمون‌دهنده', level=1)
+
+    analysis = generate_performance_report(responses, item_params, theta)
+    doc.add_paragraph(analysis)
+
     doc.save(file_path)
+
 
 @app.route('/')
 def index():
