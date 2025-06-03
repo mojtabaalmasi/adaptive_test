@@ -50,29 +50,30 @@ def index():
 @app.route('/test', methods=['GET', 'POST'])
 def test():
     questions = load_questions()
-    responses = session.get('responses', [])
-    answered_ids = session.get('answered_ids', [])
-    theta = session.get('theta', 0.0)
 
     if request.method == 'POST':
-        qid = int(request.form['qid'])
-        ans = int(request.form['answer'])
-        responses.append((qid, ans))
-        answered_ids.append(qid)
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        major = request.form.get('major')
 
-        item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in answered_ids]
-        response_vals = [r[1] for r in responses]
-        theta = estimate_theta_mle(response_vals, item_params)
+        if name and phone and major:
+            session['name'] = name
+            session['phone'] = phone
+            session['major'] = major
+            session['responses'] = []
+            session['asked_questions'] = []
+            return render_template('test.html', questions=[questions[0]], step_number=1)
 
-        session['responses'] = responses
-        session['answered_ids'] = answered_ids
-        session['theta'] = theta
+        elif 'q1' in request.form:
+            # یعنی مرحله پاسخ‌دهی به سؤال است
+            # کد ادامه آزمون مرحله‌ای اینجاست...
+            pass
 
-    next_q = select_next_question(questions, answered_ids, theta)
-    if not next_q or len(answered_ids) >= 20:
-        return redirect(url_for('results'))
+        else:
+            return "درخواست نامعتبر یا ناقص ارسال شده است.", 400
 
-    return render_template('test.html', question=next_q, step_number=len(answered_ids)+1, total_steps='Adaptive')
+    return redirect(url_for('index'))
+
 
 @app.route('/results')
 def results():
