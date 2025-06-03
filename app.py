@@ -13,6 +13,7 @@ app.secret_key = 'your_secret_key_here'
 
 DB_PATH = 'questions.db'
 OUTPUT_FOLDER = os.path.join(os.getcwd(), 'static')
+
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
