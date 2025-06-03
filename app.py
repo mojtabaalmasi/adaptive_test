@@ -1,17 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 import os
 import sqlite3
-
-from irt import (
-    estimate_theta_mle,
-    plot_icc,
-    plot_item_information,
-    save_results_to_excel,
-    save_results_to_word
-)
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
+import math
+import numpy as np
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -20,6 +11,35 @@ DB_PATH = 'questions.db'
 OUTPUT_FOLDER = os.path.join(os.getcwd(), 'static')
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
+
+# توابع مدل 3PL
+def irt_3pl_probability(theta, a, b, c):
+    exp_part = math.exp(a * (theta - b))
+    p = c + (1 - c) * (exp_part / (1 + exp_part))
+    return p
+
+def item_information(theta, a, b, c):
+    p = irt_3pl_probability(theta, a, b, c)
+    q = 1 - p
+    info = (a ** 2) * ((q / p) * ((p - c) / (1 - c)) ** 2)
+    return info
+
+# تخمین توانایی ساده با MLE عددی (جستجوی گرید)
+def estimate_theta_mle(responses, item_params):
+    # پاسخ ها لیستی از 0 و 1 است، item_params لیستی از (a,b,c)
+    # جستجوی گرید بین -4 تا 4
+    thetas = np.linspace(-4, 4, 81)  # گام 0.1
+    likelihoods = []
+
+    for theta in thetas:
+        L = 1.0
+        for u, (a, b, c) in zip(responses, item_params):
+            p = irt_3pl_probability(theta, a, b, c)
+            L *= p if u == 1 else (1 - p)
+        likelihoods.append(L)
+
+    max_idx = np.argmax(likelihoods)
+    return thetas[max_idx]
 
 def load_questions():
     conn = sqlite3.connect(DB_PATH)
@@ -30,6 +50,15 @@ def load_questions():
     questions = [{'id': row[0], 'text': row[1], 'a': row[2], 'b': row[3], 'c': row[4]} for row in rows]
     return questions
 
+def select_next_question(theta, questions, asked_ids):
+    # سوالی را که بیشترین اطلاعات در theta دارد ولی پرسیده نشده انتخاب کن
+    candidates = [q for q in questions if q['id'] not in asked_ids]
+    if not candidates:
+        return None
+    infos = [item_information(theta, q['a'], q['b'], q['c']) for q in candidates]
+    max_idx = np.argmax(infos)
+    return candidates[max_idx]
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -38,86 +67,65 @@ def index():
 def test():
     questions = load_questions()
 
-    # مرحله ورود اطلاعات اولیه کاربر
     if request.method == 'POST' and 'name' in request.form:
+        # شروع آزمون با گرفتن اطلاعات اولیه
         session['name'] = request.form['name']
         session['phone'] = request.form['phone']
         session['major'] = request.form['major']
         session['responses'] = []
         session['asked_questions'] = []
-        session['question_index'] = 0
-        # نمایش اولین سوال
-        return render_template('test.html', questions=[questions[0]], step_number=1, total_steps=len(questions))
+        session['theta'] = 0.0  # توانایی شروعی
+        # انتخاب سوال اول با بیشترین اطلاعات در theta=0
+        first_q = select_next_question(0.0, questions, [])
+        if first_q is None:
+            return "هیچ سوالی برای آزمون وجود ندارد."
+        session['current_question'] = first_q
+        return render_template('test.html', questions=[first_q], step_number=1, total_steps='نامشخص')
 
-    # مرحله پاسخگویی به سوالات
     elif request.method == 'POST':
+        # دریافت پاسخ سوال فعلی
+        current_q = session.get('current_question', None)
+        if current_q is None:
+            return redirect(url_for('index'))
+
+        ans = request.form.get(f'q{current_q["id"]}')
+        if ans is None:
+            return "لطفا یک پاسخ انتخاب کنید."
+
         responses = session.get('responses', [])
         asked = session.get('asked_questions', [])
-        index = session.get('question_index', 0)
-
-        # دریافت id سوال فعلی
-        current_question = questions[index]
-        q_id = current_question['id']
-
-        # دریافت پاسخ کاربر به سوال فعلی
-        ans = request.form.get(f'q{q_id}')
-        if ans not in ['0', '1']:
-            # اگر پاسخ داده نشده یا اشتباه است، دوباره سوال را نشان بده
-            return render_template('test.html', questions=[current_question], step_number=index+1, total_steps=len(questions), error="لطفا به سوال پاسخ دهید.")
+        theta = session.get('theta', 0.0)
 
         responses.append(int(ans))
-        asked.append(q_id)
+        asked.append(current_q['id'])
 
-        index += 1  # رفتن به سوال بعدی
-
-        # به‌روزرسانی session
+        # بروزرسانی توانایی
+        item_params = [(q['a'], q['b'], q['c']) for q in questions if q['id'] in asked]
+        theta = estimate_theta_mle(responses, item_params)
+        session['theta'] = theta
         session['responses'] = responses
         session['asked_questions'] = asked
-        session['question_index'] = index
 
-        if index < len(questions):
-            # اگر هنوز سوال باقی است، سوال بعدی را نشان بده
-            return render_template('test.html', questions=[questions[index]], step_number=index+1, total_steps=len(questions))
-        else:
-            # اگر سوالات تمام شدند، محاسبات و نمودارها را انجام بده و به صفحه نتایج برو
-            item_params = [(q['a'], q['b'], q['c']) for q in questions]
-            theta = estimate_theta_mle(responses, item_params)
-            session['theta'] = theta
-
-            plot_icc(item_params, save_path=os.path.join(OUTPUT_FOLDER, 'icc.png'))
-            plot_item_information(item_params, save_path=os.path.join(OUTPUT_FOLDER, 'item_info.png'))
-            save_results_to_excel(os.path.join(OUTPUT_FOLDER, 'results.xlsx'), responses, item_params, theta)
-            save_results_to_word(os.path.join(OUTPUT_FOLDER, 'results.docx'), responses, item_params, theta)
-
+        # انتخاب سوال بعدی
+        next_q = select_next_question(theta, questions, asked)
+        if next_q is None:
+            # آزمون تمام شده
+            session['current_question'] = None
+            # می‌تونی اینجا تحلیل‌ها و ذخیره‌سازی نتایج رو انجام بدی
             return redirect(url_for('results'))
 
-    # اگر کاربر مستقیم به این آدرس با GET آمد، برگرد به صفحه اصلی
+        session['current_question'] = next_q
+        step_number = len(asked) + 1
+        return render_template('test.html', questions=[next_q], step_number=step_number, total_steps='نامشخص')
+
     return redirect(url_for('index'))
 
 @app.route('/results')
 def results():
-    try:
-        theta = session.get('theta', None)
-        if theta is None:
-            return redirect(url_for('index'))
-
-        return render_template(
-            'results.html',
-            theta=theta,
-            icc_image=url_for('static', filename='icc.png'),
-            info_image=url_for('static', filename='item_info.png'),
-            excel_file=url_for('static', filename='results.xlsx'),
-            word_file=url_for('static', filename='results.docx'),
-        )
-    except Exception as e:
-        import traceback
-        tb = traceback.format_exc()
-        return f"<h2>خطا در مسیر results:</h2><pre>{tb}</pre>"
-
-
-@app.route('/download/<filename>')
-def download_file(filename):
-    return send_from_directory(OUTPUT_FOLDER, filename, as_attachment=True)
+    theta = session.get('theta', None)
+    if theta is None:
+        return redirect(url_for('index'))
+    return render_template('results.html', theta=theta)
 
 if __name__ == '__main__':
     app.run(debug=True)
