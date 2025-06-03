@@ -74,7 +74,7 @@ def test():
 
     return redirect(url_for('index'))
 
-@@app.route('/results')
+@app.route('/results')
 def results():
     try:
         theta = session.get('theta', None)
