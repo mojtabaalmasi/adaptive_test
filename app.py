@@ -37,7 +37,7 @@ def index():
 def test():
     questions = load_questions()
 
-    iif request.method == 'POST' and 'name' in request.form:
+    if request.method == 'POST' and 'name' in request.form:
     session['name'] = request.form['name']
     session['phone'] = request.form['phone']
     session['major'] = request.form['major']
