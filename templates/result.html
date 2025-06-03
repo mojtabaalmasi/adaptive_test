@@ -1,17 +1,9 @@
-@app.route('/results')
-def results():
-    try:
-        theta = session.get('theta', None)
-        if theta is None:
-            return redirect(url_for('index'))
-
-        return render_template(
-            'results.html',
-            theta=theta,
-            icc_image=url_for('static', filename='icc.png'),
-            info_image=url_for('static', filename='item_info.png'),
-            excel_file=url_for('static', filename='results.xlsx'),
-            word_file=url_for('static', filename='results.docx'),
-        )
-    except Exception as e:
-        return f"Error in results route: {e}"
+<!DOCTYPE html>
+<html lang="fa">
+<head><title>نتیجه آزمون</title></head>
+<body>
+  <h1>نتیجه آزمون شما</h1>
+  <p>مقدار θ شما: {{ theta }}</p>
+  <a href="{{ url_for('index') }}">بازگشت به صفحه اصلی</a>
+</body>
+</html>
