@@ -103,7 +103,7 @@ def start_test():
     session['theta'] = 0
     return redirect(url_for('test_question'))
 
-@@app.route('/test_question', methods=['GET'])
+@app.route('/test_question', methods=['GET'])
 def test_question():
     question = {
         'id': 1,
