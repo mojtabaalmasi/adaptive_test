@@ -31,6 +31,24 @@ def item_information(theta, a, b, c):
     q = 1 - p
     return (a ** 2) * ((q / p) * ((p - c) / (1 - c)) ** 2)
 
+
+import json
+from datetime import datetime
+import sqlite3
+
+def insert_user_result(full_name, native_language, major, age, persian_familiarity, theta, responses):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    responses_json = json.dumps(responses, ensure_ascii=False)
+    cursor.execute('''
+        INSERT INTO user_results 
+        (full_name, native_language, major, age, persian_familiarity, theta, responses, test_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (full_name, native_language, major, age, persian_familiarity, theta, responses_json, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+
+
 def estimate_theta_mle(responses, item_params):
     thetas = np.linspace(-4, 4, 81)
     likelihoods = []
@@ -101,6 +119,42 @@ def save_results_to_excel(path, responses, item_params, theta):
     ws.append([])
     ws.append(['θ تخمینی', theta])
     wb.save(path)
+    
+    
+@app.route('/results')
+def result():
+    theta = session.get('theta', 0)
+    responses = session.get('responses', [])
+    item_params = session.get('item_params', [])
+
+    filename = f"result_{session['full_name'].replace(' ', '_')}.xlsx"
+    file_path = os.path.join(OUTPUT_FOLDER, filename)
+    save_results_to_excel(file_path, responses, item_params, theta)
+
+    # ذخیره نتایج در دیتابیس
+    insert_user_result(
+        full_name=session.get('full_name'),
+        native_language=session.get('native_language'),
+        major=session.get('major'),
+        age=int(session.get('age')) if session.get('age') else None,
+        persian_familiarity=session.get('persian_familiarity'),
+        theta=theta,
+        responses=responses
+    )
+
+    return render_template('result.html', theta=theta, file_link=url_for('static', filename=filename),
+                           full_name=session.get('full_name'),
+                           native_language=session.get('native_language'),
+                           major=session.get('major'),
+                           age=session.get('age'),
+                           persian_familiarity=session.get('persian_familiarity'),
+                           reading_level=session.get('reading_level', ''),
+                           writing_level=session.get('writing_level', ''),
+                           speaking_level=session.get('speaking_level', ''),
+                           listening_level=session.get('listening_level', ''),
+                           persian_courses=session.get('persian_courses', ''),
+                           persian_institute=session.get('persian_institute', ''))
+
 
 def save_results_to_word(path):
     doc = Document()
@@ -127,13 +181,16 @@ def start_test():
     return redirect(url_for('show_question'))
 
 @app.route('/question', methods=['GET', 'POST'])
+@app.route('/question', methods=['GET', 'POST'])
 def show_question():
-    # در route مربوط به نمایش سوال (show_question)
-    progress_percentage = int(100 * len(session['responses']) / MAX_QUESTIONS)
-    return render_template("test.html",
-                           question=next_q,
-                           question_number=len(session['responses']) + 1,
-                           progress_percentage=progress_percentage)
+    MAX_QUESTIONS = 30  # یا هر تعداد سوالی که داری
+
+    if 'responses' not in session:
+        session['responses'] = []
+    if 'item_params' not in session:
+        session['item_params'] = []
+    if 'asked_ids' not in session:
+        session['asked_ids'] = []
 
     if request.method == 'POST':
         selected = int(request.form.get('answer'))
@@ -149,11 +206,20 @@ def show_question():
     questions = load_questions()
     theta = estimate_theta_mle(session['responses'], session['item_params']) if session['responses'] else 0
     next_q = select_next_question(theta, questions, session['asked_ids'])
-    if not next_q:
+
+    if not next_q or len(session['responses']) >= MAX_QUESTIONS:
         session['theta'] = theta
         return redirect(url_for('result'))
+
     session['current_question'] = next_q
-    return render_template('question.html', question=next_q)
+
+    progress_percentage = int(100 * len(session['responses']) / MAX_QUESTIONS)
+
+    return render_template("test.html",
+                           question=next_q,
+                           question_number=len(session['responses']) + 1,
+                           progress_percentage=progress_percentage)
+
 
 @app.route('/results')
 def result():
