@@ -1,37 +1,13 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>فرم ثبت‌نام آزمون</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+<!doctype html>
+<html>
+<head><title>ثبت نام آزمون</title></head>
 <body>
-    <div class="form-box">
-        <h2>فرم ثبت‌نام آزمون</h2>
-        <form method="POST" action="/test">
-            <label for="full_name">نام و نام خانوادگی:</label>
-            <input type="text" id="full_name" name="full_name" required>
-
-            <label for="native_language">زبان مادری:</label>
-            <input type="text" id="native_language" name="native_language" required>
-
-            <label for="major">رشته تحصیلی:</label>
-            <input type="text" id="major" name="major" required>
-
-            <label for="age">سن:</label>
-            <input type="number" id="age" name="age" min="5" max="100" required>
-
-            <label for="persian_familiarity">میزان آشنایی با زبان فارسی:</label>
-            <select name="persian_familiarity" id="persian_familiarity" required>
-                <option value="">انتخاب کنید</option>
-                <option value="کم">کم</option>
-                <option value="متوسط">متوسط</option>
-                <option value="زیاد">زیاد</option>
-            </select>
-
-            <button type="submit">شروع آزمون</button>
-        </form>
-    </div>
+    <h1>ثبت نام آزمون</h1>
+    <form method="post">
+        نام کامل: <input type="text" name="full_name" required><br>
+        سن: <input type="number" name="age" required><br>
+        زبان مادری: <input type="text" name="language" required><br>
+        <button type="submit">شروع آزمون</button>
+    </form>
 </body>
 </html>

@@ -1,42 +1,8 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>نتایج آزمون انطباقی</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+<!doctype html>
+<html>
+<head><title>نتایج آزمون</title></head>
 <body>
-    <div class="container">
-        <h2>نتایج آزمون انطباقی</h2>
-
-        <h3>مشخصات شرکت‌کننده</h3>
-        <ul>
-            <li><strong>نام و نام خانوادگی:</strong> {{ full_name }}</li>
-            <li><strong>زبان مادری:</strong> {{ native_language }}</li>
-            <li><strong>رشته تحصیلی:</strong> {{ major }}</li>
-            <li><strong>سن:</strong> {{ age }}</li>
-            <li><strong>میزان آشنایی با زبان فارسی:</strong> {{ persian_familiarity }}</li>
-        </ul>
-
-        <h3>نتیجه توانایی (θ):</h3>
-        <p>{{ theta }}</p>
-
-        <h3>نمودار تابع احتمال پاسخ صحیح (ICC)</h3>
-        <img src="{{ icc_image }}" alt="نمودار ICC" style="max-width: 600px;">
-
-        <h3>نمودار اطلاعات آیتم</h3>
-        <img src="{{ info_image }}" alt="نمودار اطلاعات آیتم" style="max-width: 600px;">
-
-        <h3>دانلود فایل‌های نتایج</h3>
-        <ul>
-            <li><a href="{{ excel_file }}" download>دانلود فایل اکسل</a></li>
-            <li><a href="{{ word_file }}" download>دانلود فایل ورد</a></li>
-        </ul>
-		<ul>
-    <li><a href="{{ url_for('download_file', filetype='excel', filename=excel_file.split('/')[-1]) }}">دانلود فایل اکسل</a></li>
-    <li><a href="{{ url_for('download_file', filetype='word', filename=word_file.split('/')[-1]) }}">دانلود فایل ورد</a></li>
-</ul>
-
-    </div>
+    <h1>نتایج آزمون برای {{ participant.full_name }}</h1>
+    <p>تعداد پاسخ‌های صحیح: {{ correct_count }} از {{ total }}</p>
 </body>
 </html>

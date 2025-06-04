@@ -1,22 +1,14 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <title>سؤال {{ question.id }}</title>
-</head>
+<!doctype html>
+<html>
+<head><title>سؤال {{ question.id }}</title></head>
 <body>
-    <h1>سؤال شماره {{ question.id }}</h1>
+    <h2>سؤال {{ question.id }}</h2>
     <p>{{ question.text }}</p>
-
-    <form method="post" action="/submit_answer">
-        <input type="hidden" name="question_id" value="{{ question.id }}">
-        {% for option in question.options %}
-            <label>
-                <input type="radio" name="answer" value="{{ loop.index }}">
-                {{ option }}
-            </label><br>
+    <form method="post">
+        {% for opt in question.options %}
+            <input type="radio" name="option" value="{{ loop.index }}" required> {{ opt }}<br>
         {% endfor %}
-        <button type="submit">ارسال پاسخ</button>
+        <button type="submit">ثبت پاسخ</button>
     </form>
 </body>
 </html>
