@@ -184,7 +184,7 @@ def generate_performance_report(responses, item_params, theta):
 
 
 def save_results_to_word(file_path, responses, item_params, theta):
-    def save_results_to_word(file_path, responses, item_params, theta):
+   
     doc = Document()
     doc.add_heading('گزارش نتایج آزمون', 0)
 
