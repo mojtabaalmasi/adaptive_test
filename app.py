@@ -18,6 +18,9 @@ OUTPUT_FOLDER = os.path.join(os.getcwd(), 'static')
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
+
+MAX_QUESTIONS = 30  # یا هر تعداد سوالی که در آزمون داری
+
 # --- مدل 3PL ---
 def irt_3pl_probability(theta, a, b, c):
     exp_part = math.exp(a * (theta - b))
