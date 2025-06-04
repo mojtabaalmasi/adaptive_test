@@ -170,7 +170,7 @@ def start_test():
 
     return redirect(url_for('show_question'))
 
-@app.route('/questions', methods=['GET', 'POST'])
+@app.route('/test', methods=['GET', 'POST'])
 def show_question():
     if request.method == 'POST':
         selected = int(request.form.get('answer'))
