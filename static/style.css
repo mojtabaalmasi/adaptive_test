@@ -6,10 +6,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    direction: rtl;
 }
 
-.form-box {
+.form-box, .container {
     background-color: #ffffff;
     padding: 20px 30px;
     border-radius: 12px;
@@ -18,7 +19,7 @@ body {
     max-width: 400px;
 }
 
-.form-box h2 {
+.form-box h2, .container h2 {
     margin-bottom: 20px;
     text-align: center;
     color: #333;
@@ -56,4 +57,22 @@ button {
 
 button:hover {
     background-color: #004d99;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #eee;
+    border-radius: 20px;
+    margin: 20px 0;
+    height: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #4caf50;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    font-size: 12px;
+    line-height: 20px;
 }

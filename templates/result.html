@@ -16,12 +16,6 @@
             <li><strong>رشته تحصیلی:</strong> {{ major }}</li>
             <li><strong>سن:</strong> {{ age }}</li>
             <li><strong>میزان آشنایی با زبان فارسی:</strong> {{ persian_familiarity }}</li>
-            <li><strong>سطح خواندن:</strong> {{ reading_level }}</li>
-            <li><strong>سطح نوشتن:</strong> {{ writing_level }}</li>
-            <li><strong>سطح صحبت کردن:</strong> {{ speaking_level }}</li>
-            <li><strong>سطح شنیداری:</strong> {{ listening_level }}</li>
-            <li><strong>دوره‌های زبان فارسی:</strong> {{ persian_courses }}</li>
-            <li><strong>محل آموزش زبان فارسی:</strong> {{ persian_institute }}</li>
         </ul>
 
         <h3>نتیجه توانایی (θ):</h3>
@@ -38,6 +32,11 @@
             <li><a href="{{ excel_file }}" download>دانلود فایل اکسل</a></li>
             <li><a href="{{ word_file }}" download>دانلود فایل ورد</a></li>
         </ul>
+		<ul>
+    <li><a href="{{ url_for('download_file', filetype='excel', filename=excel_file.split('/')[-1]) }}">دانلود فایل اکسل</a></li>
+    <li><a href="{{ url_for('download_file', filetype='word', filename=word_file.split('/')[-1]) }}">دانلود فایل ورد</a></li>
+</ul>
+
     </div>
 </body>
 </html>
