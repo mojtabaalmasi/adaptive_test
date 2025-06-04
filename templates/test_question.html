@@ -1,29 +1,22 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <title>سؤال {{ question.id }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h2>سؤال شماره {{ question_number }}</h2>
-        <p>{{ question.text }}</p>
+    <h1>سؤال شماره {{ question.id }}</h1>
+    <p>{{ question.text }}</p>
 
-        <form method="POST">
-            {% for i in range(4) %}
-                <label>
-                    <input type="radio" name="answer" value="{{ i + 1 }}" required>
-                    {{ question.options[i] }}
-                </label><br>
-            {% endfor %}
-            <button type="submit">ثبت پاسخ و ادامه</button>
-        </form>
-
-        <div class="progress-container" style="margin-top:20px;">
-            <div style="width: {{ progress_percentage }}%; height: 20px; background-color: #4caf50; border-radius: 10px;"></div>
-            <p style="text-align:center;">{{ progress_percentage }}٪ پیشرفت</p>
-        </div>
-    </div>
+    <form method="post" action="/submit_answer">
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+        {% for option in question.options %}
+            <label>
+                <input type="radio" name="answer" value="{{ loop.index }}">
+                {{ option }}
+            </label><br>
+        {% endfor %}
+        <button type="submit">ارسال پاسخ</button>
+    </form>
 </body>
 </html>

@@ -103,16 +103,15 @@ def start_test():
     session['theta'] = 0
     return redirect(url_for('test_question'))
 
-@app.route('/test_question', methods=['GET', 'POST'])
+@@app.route('/test_question', methods=['GET'])
 def test_question():
-    if request.method == 'POST':
-        answer = request.form.get('answer')
-        session['responses'].append(answer)
-        session['theta'] += 0.1
-        if len(session['responses']) >= 30:
-            return redirect(url_for('result'))
-        return render_template('test_question.html', question_number=len(session['responses'])+1)
-    return render_template('test_question.html', question_number=1)
+    question = {
+        'id': 1,
+        'text': 'اولین سؤال آزمون چیست؟',
+        'options': ['گزینه اول', 'گزینه دوم', 'گزینه سوم', 'گزینه چهارم']
+    }
+    return render_template('test_question.html', question=question)
+
 
 @app.route('/results')
 def result():
