@@ -170,7 +170,7 @@ def start_test():
 
     return redirect(url_for('show_question'))
 
-@app.route('/question', methods=['GET', 'POST'])
+@app.route('/questions', methods=['GET', 'POST'])
 def show_question():
     if request.method == 'POST':
         selected = int(request.form.get('answer'))
@@ -199,7 +199,7 @@ def show_question():
     session['current_question'] = next_q
     return render_template('question.html', question=next_q)
 
-@app.route('/result')
+@app.route('/results')
 def result():
     theta = session.get('theta', 0)
     responses = session.get('responses', [])
