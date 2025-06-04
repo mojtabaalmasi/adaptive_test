@@ -149,12 +149,13 @@ def save_results_to_excel(file_path, responses, item_params, theta):
 
     wb.save(file_path)
 
-# --- صفحه ثبت‌نام ---
-
+# صفحه ثبت‌نام
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
 
+
+# آغاز آزمون - ذخیره اطلاعات اولیه و هدایت به اولین سوال
 @app.route('/test', methods=['POST'])
 def start_test():
     data = request.form
@@ -170,7 +171,9 @@ def start_test():
 
     return redirect(url_for('show_question'))
 
-@app.route('/test', methods=['GET', 'POST'])
+
+# نمایش سوال‌ها و ثبت پاسخ‌ها
+@app.route('/question', methods=['GET', 'POST'])
 def show_question():
     if request.method == 'POST':
         selected = int(request.form.get('answer'))
@@ -199,6 +202,8 @@ def show_question():
     session['current_question'] = next_q
     return render_template('question.html', question=next_q)
 
+
+# نمایش نتایج و ذخیره فایل خروجی
 @app.route('/results')
 def result():
     theta = session.get('theta', 0)
@@ -211,5 +216,7 @@ def result():
 
     return render_template('result.html', theta=theta, file_link=url_for('static', filename=filename))
 
+
+# اجرای برنامه
 if __name__ == '__main__':
     app.run(debug=True)
