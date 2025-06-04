@@ -5,6 +5,22 @@
     <title>نتایج آزمون</title>
 </head>
 <body>
+
+	<h3>مشخصات شرکت‌کننده</h3>
+	<ul>
+	  <li><strong>نام و نام خانوادگی:</strong> {{ full_name }}</li>
+	  <li><strong>زبان مادری:</strong> {{ native_language }}</li>
+	  <li><strong>رشته تحصیلی:</strong> {{ major }}</li>
+	  <li><strong>سن:</strong> {{ age }}</li>
+	  <li><strong>آشنایی با زبان فارسی:</strong> {{ persian_familiarity }}</li>
+	  <li><strong>سطح خواندن:</strong> {{ reading_level }}</li>
+	  <li><strong>سطح نوشتن:</strong> {{ writing_level }}</li>
+	  <li><strong>سطح صحبت کردن:</strong> {{ speaking_level }}</li>
+	  <li><strong>سطح شنیداری:</strong> {{ listening_level }}</li>
+	  <li><strong>دوره‌های آموزش زبان فارسی:</strong> {{ persian_courses }}</li>
+	  <li><strong>محل آموزش زبان فارسی:</strong> {{ persian_institute }}</li>
+	</ul>
+
     <h1>نتایج آزمون انطباقی</h1>
     <p>تخمین توانایی (θ): {{ theta }}</p>
 

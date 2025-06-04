@@ -126,6 +126,19 @@ def save_results_to_excel(file_path, responses, item_params, theta):
 
     ws.cell(row=len(responses)+3, column=1, value="توانایی تخمینی θ:")
     ws.cell(row=len(responses)+3, column=2, value=theta)
+    
+    info_ws = wb.create_sheet("مشخصات فردی")
+    info_ws.append(["نام و نام خانوادگی", session.get('full_name', '')])
+    info_ws.append(["زبان مادری", session.get('native_language', '')])
+    info_ws.append(["رشته تحصیلی", session.get('major', '')])
+    info_ws.append(["سن", session.get('age', '')])
+    info_ws.append(["آشنایی با زبان فارسی", session.get('persian_familiarity', '')])
+    info_ws.append(["سطح خواندن", session.get('reading_level', '')])
+    info_ws.append(["سطح نوشتن", session.get('writing_level', '')])
+    info_ws.append(["سطح صحبت کردن", session.get('speaking_level', '')])
+    info_ws.append(["سطح شنیداری", session.get('listening_level', '')])
+    info_ws.append(["دوره‌های زبان فارسی", session.get('persian_courses', '')])
+    info_ws.append(["محل آموزش زبان فارسی", session.get('persian_institute', '')])
 
     wb.save(file_path)
     
@@ -171,10 +184,24 @@ def generate_performance_report(responses, item_params, theta):
 
 
 def save_results_to_word(file_path, responses, item_params, theta):
+    def save_results_to_word(file_path, responses, item_params, theta):
     doc = Document()
     doc.add_heading('گزارش نتایج آزمون', 0)
 
-    # جدول پاسخ‌ها و پارامترها
+    # اطلاعات ثبت‌نامی
+    doc.add_paragraph(f"نام و نام خانوادگی: {session.get('full_name', '')}")
+    doc.add_paragraph(f"زبان مادری: {session.get('native_language', '')}")
+    doc.add_paragraph(f"رشته تحصیلی: {session.get('major', '')}")
+    doc.add_paragraph(f"سن: {session.get('age', '')}")
+    doc.add_paragraph(f"آشنایی با زبان فارسی: {session.get('persian_familiarity', '')}")
+    doc.add_paragraph(f"سطح خواندن: {session.get('reading_level', '')}")
+    doc.add_paragraph(f"سطح نوشتن: {session.get('writing_level', '')}")
+    doc.add_paragraph(f"سطح صحبت کردن: {session.get('speaking_level', '')}")
+    doc.add_paragraph(f"سطح شنیداری: {session.get('listening_level', '')}")
+    doc.add_paragraph(f"دوره‌های آموزش زبان فارسی: {session.get('persian_courses', '')}")
+    doc.add_paragraph(f"محل آموزش زبان فارسی: {session.get('persian_institute', '')}")
+    doc.add_paragraph("\n")
+
     table = doc.add_table(rows=1, cols=5)
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'شماره سوال'
@@ -192,14 +219,8 @@ def save_results_to_word(file_path, responses, item_params, theta):
         row_cells[4].text = f"{c:.3f}"
 
     doc.add_paragraph(f"\nتوانایی تخمینی θ: {theta:.3f}")
-
-    # تحلیل عملکرد آزمون‌دهنده
-    doc.add_heading('تحلیل عملکرد آزمون‌دهنده', level=1)
-
-    analysis = generate_performance_report(responses, item_params, theta)
-    doc.add_paragraph(analysis)
-
     doc.save(file_path)
+
 
 
 @app.route('/')
@@ -211,11 +232,48 @@ def test():
     try:
         questions = load_questions()
 
-        if request.method == 'POST' and 'name' in request.form:
-            # شروع آزمون با دریافت نام و اطلاعات اولیه
-            session['name'] = request.form['name']
-            session['phone'] = request.form['phone']
+        if request.method == 'POST' and 'full_name' in request.form:
+            session['full_name'] = request.form['full_name']
+            session['native_language'] = request.form['native_language']
             session['major'] = request.form['major']
+            session['age'] = int(request.form['age'])
+            session['persian_familiarity'] = request.form['persian_familiarity']
+            session['reading_level'] = request.form['reading_level']
+            session['writing_level'] = request.form['writing_level']
+            session['speaking_level'] = request.form['speaking_level']
+            session['listening_level'] = request.form['listening_level']
+            session['persian_courses'] = request.form['persian_courses']
+            session['persian_institute'] = request.form['persian_institute']
+            session['responses'] = []
+            session['asked_questions'] = []
+            session['theta'] = 0.0
+
+    # ذخیره در دیتابیس
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO users (
+            full_name, native_language, major, age, persian_familiarity,
+            reading_level, writing_level, speaking_level, listening_level,
+            persian_courses, persian_institute
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        session['full_name'], session['native_language'], session['major'], session['age'],
+        session['persian_familiarity'], session['reading_level'], session['writing_level'],
+        session['speaking_level'], session['listening_level'],
+        session['persian_courses'], session['persian_institute']
+          ))
+    conn.commit()
+    conn.close()
+
+    # شروع آزمون
+    questions = load_questions()
+    first_q = select_next_question(0.0, questions, [])
+    if first_q is None:
+        return "هیچ سوالی برای آزمون وجود ندارد."
+    session['current_question'] = first_q
+    return render_template('test.html', questions=[first_q], step_number=1, total_steps='نامشخص')
+
             session['responses'] = []
             session['asked_questions'] = []
             session['theta'] = 0.0
@@ -288,13 +346,25 @@ def results():
         return redirect(url_for('index'))
 
     return render_template(
-        'results.html',
-        theta=theta,
-        icc_image=url_for('static', filename='icc.png'),
-        info_image=url_for('static', filename='item_info.png'),
-        excel_file=url_for('static', filename='results.xlsx'),
-        word_file=url_for('static', filename='results.docx'),
-    )
+    'results.html',
+    theta=theta,
+    icc_image=url_for('static', filename='icc.png'),
+    info_image=url_for('static', filename='item_info.png'),
+    excel_file=url_for('static', filename='results.xlsx'),
+    word_file=url_for('static', filename='results.docx'),
+    full_name=session.get('full_name'),
+    native_language=session.get('native_language'),
+    major=session.get('major'),
+    age=session.get('age'),
+    persian_familiarity=session.get('persian_familiarity'),
+    reading_level=session.get('reading_level'),
+    writing_level=session.get('writing_level'),
+    speaking_level=session.get('speaking_level'),
+    listening_level=session.get('listening_level'),
+    persian_courses=session.get('persian_courses'),
+    persian_institute=session.get('persian_institute')
+)
+
 
 @app.route('/download/<filename>')
 def download_file(filename):

@@ -1,107 +1,30 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>شروع آزمون انطباقی</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background: linear-gradient(to right, #667eea, #764ba2);
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            direction: rtl;
-        }
+<form method="post" action="{{ url_for('test') }}">
+  <form method="POST" action="{{ url_for('test') }}">
+  <label>نام و نام خانوادگی:</label><br>
+  <input type="text" name="name" required><br><br>
 
-        .container {
-            background-color: rgba(0, 0, 0, 0.4);
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
+  <label>زبان مادری:</label><br>
+  <input type="text" name="language" required><br><br>
 
-        img.logo {
-            width: 100px;
-            margin-bottom: 15px;
-        }
+  <label>رشته تحصیلی:</label><br>
+  <input type="text" name="major" required><br><br>
 
-        h2 {
-            margin-bottom: 20px;
-        }
+  <label>سن:</label><br>
+  <input type="number" name="age" required><br><br>
 
-        label {
-            display: block;
-            margin: 12px 0 5px;
-            font-size: 0.95rem;
-            text-align: right;
-        }
+  <label>میزان آشنایی با زبان فارسی:</label><br>
+  <input type="text" name="farsi_level" required><br><br>
 
-        input[type="text"],
-        input[type="tel"] {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
+  <label>سطح مهارت‌های زبان فارسی (خواندن، نوشتن، شنیدن، صحبت کردن):</label><br>
+  <input type="text" name="farsi_skills" placeholder="مثلاً: خوب، متوسط، ضعیف" required><br><br>
 
-        button {
-            margin-top: 20px;
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1rem;
-            background-color: #38b6ff;
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
+  <label>دوره‌های آموزشی زبان فارسی که گذرانده‌اید:</label><br>
+  <input type="text" name="farsi_courses"><br><br>
 
-        button:hover {
-            background-color: #1d9bf0;
-        }
+  <label>محل آموزش زبان فارسی:</label><br>
+  <input type="text" name="learning_place"><br><br>
 
-        @media screen and (max-width: 480px) {
-            .container {
-                padding: 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="لوگوی آزمون" class="logo">
-        <h2>ورود به آزمون انطباقی</h2>
-       <form action="{{ url_for('test') }}" method="POST">
-  <input type="text" name="name" placeholder="نام و نام خانوادگی" required>
-  <input type="text" name="phone" placeholder="شماره تماس" required>
-  <input type="text" name="major" placeholder="رشته تحصیلی" required>
-  <button type="submit">شروع آزمون</button>
+  <input type="submit" value="شروع آزمون">
 </form>
 
-
-    </div>
-
-    <!-- صدا -->
-    <audio id="start-sound" preload="auto">
-        <source src="{{ url_for('static', filename='start.mp3') }}" type="audio/mpeg">
-    </audio>
-
-    <script>
-        function playSound() {
-            const sound = document.getElementById("start-sound");
-            sound.play();
-        }
-    </script>
-</body>
-</html>
+</form>
