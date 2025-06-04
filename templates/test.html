@@ -1,31 +1,64 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>آزمون انطباقی - مرحله‌ای</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .progress-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 20px;
+            margin: 20px 0;
+            height: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #4caf50;
+            width: {{ progress_percentage }}%;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+        }
+
+        .end-message {
+            margin-top: 30px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            color: #444;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>سوال {{ step_number }}</h2>
+        <h2>سؤال شماره {{ question_number }}</h2>
+
+        <!-- نوار پیشرفت -->
+        <div class="progress-container">
+            <div class="progress-bar">{{ progress_percentage }}%</div>
+        </div>
+
+        {% if question %}
         <form method="POST">
-		  {% for q in questions %}
-			<p>{{ q.text }}</p>
-			{% for i in range(4) %}
-			  <label>
-				<input type="radio" name="q{{ q.id }}" value="{{ i+1 }}">
-				{{ q.options[i] }}
-			  </label><br>
-			{% endfor %}
-		  {% endfor %}
-		  <button type="submit">ثبت پاسخ</button>
-		</form>
-
-
-        {% if step_number == total_steps %}
+            <p>{{ question.text }}</p>
+            {% for i in range(4) %}
+                <label>
+                    <input type="radio" name="answer" value="{{ i + 1 }}" required>
+                    {{ question.options[i] }}
+                </label><br>
+            {% endfor %}
+            <button type="submit">ثبت پاسخ و رفتن به سؤال بعد</button>
+        </form>
+        {% else %}
         <div class="end-message">
-            <p>شما به پایان آزمون رسیده‌اید.</p>
-            <a href="{{ url_for('results') }}" class="results-button">مشاهده نتایج</a>
+            <p>🎉 شما به پایان آزمون رسیدید.</p>
+            <p>برای مشاهده نتایج خود، روی دکمه زیر کلیک کنید:</p>
+            <a href="{{ url_for('result') }}" class="results-button">مشاهده نتایج</a>
         </div>
         {% endif %}
     </div>
