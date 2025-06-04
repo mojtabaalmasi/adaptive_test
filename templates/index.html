@@ -1,30 +1,157 @@
-<form method="post" action="{{ url_for('test') }}">
-  <form method="POST" action="{{ url_for('test') }}">
-  <label>نام و نام خانوادگی:</label><br>
-  <input type="text" name="name" required><br><br>
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ثبت نام آزمون</title>
+    <style>
+        /* Reset اولیه */
+        * {
+            box-sizing: border-box;
+            font-family: 'Tahoma', sans-serif;
+        }
 
-  <label>زبان مادری:</label><br>
-  <input type="text" name="language" required><br><br>
+        body {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
 
-  <label>رشته تحصیلی:</label><br>
-  <input type="text" name="major" required><br><br>
+        .container {
+            background: #22254b;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 480px;
+        }
 
-  <label>سن:</label><br>
-  <input type="number" name="age" required><br><br>
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
 
-  <label>میزان آشنایی با زبان فارسی:</label><br>
-  <input type="text" name="farsi_level" required><br><br>
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
 
-  <label>سطح مهارت‌های زبان فارسی (خواندن، نوشتن، شنیدن، صحبت کردن):</label><br>
-  <input type="text" name="farsi_skills" placeholder="مثلاً: خوب، متوسط، ضعیف" required><br><br>
+        form input[type="text"],
+        form input[type="number"],
+        form select {
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            transition: box-shadow 0.3s ease;
+        }
 
-  <label>دوره‌های آموزشی زبان فارسی که گذرانده‌اید:</label><br>
-  <input type="text" name="farsi_courses"><br><br>
+        form input[type="text"]:focus,
+        form input[type="number"]:focus,
+        form select:focus {
+            box-shadow: 0 0 6px #2575fc;
+        }
 
-  <label>محل آموزش زبان فارسی:</label><br>
-  <input type="text" name="learning_place"><br><br>
+        form button {
+            width: 100%;
+            padding: 12px 0;
+            background: #2575fc;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
 
-  <input type="submit" value="شروع آزمون">
-</form>
+        form button:hover {
+            background: #6a11cb;
+        }
 
-</form>
+        /* نمایش ریسپانسیو در موبایل */
+        @media (max-width: 500px) {
+            .container {
+                padding: 20px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>فرم ثبت نام آزمون</h1>
+        <form method="POST" action="{{ url_for('test') }}">
+            <label for="full_name">نام و نام خانوادگی:</label>
+            <input type="text" id="full_name" name="full_name" required placeholder="مثلاً علی محمدی" />
+
+            <label for="native_language">زبان مادری:</label>
+            <input type="text" id="native_language" name="native_language" required placeholder="مثلاً فارسی" />
+
+            <label for="major">رشته تحصیلی:</label>
+            <input type="text" id="major" name="major" required placeholder="مثلاً ریاضی" />
+
+            <label for="age">سن:</label>
+            <input type="number" id="age" name="age" required min="5" max="100" />
+
+            <label for="persian_familiarity">آشنایی با زبان فارسی:</label>
+            <select id="persian_familiarity" name="persian_familiarity" required>
+                <option value="">انتخاب کنید</option>
+                <option value="کم">کم</option>
+                <option value="متوسط">متوسط</option>
+                <option value="زیاد">زیاد</option>
+            </select>
+
+            <label for="reading_level">سطح خواندن:</label>
+            <select id="reading_level" name="reading_level" required>
+                <option value="">انتخاب کنید</option>
+                <option value="ابتدایی">ابتدایی</option>
+                <option value="متوسط">متوسط</option>
+                <option value="پیشرفته">پیشرفته</option>
+            </select>
+
+            <label for="writing_level">سطح نوشتن:</label>
+            <select id="writing_level" name="writing_level" required>
+                <option value="">انتخاب کنید</option>
+                <option value="ابتدایی">ابتدایی</option>
+                <option value="متوسط">متوسط</option>
+                <option value="پیشرفته">پیشرفته</option>
+            </select>
+
+            <label for="speaking_level">سطح صحبت کردن:</label>
+            <select id="speaking_level" name="speaking_level" required>
+                <option value="">انتخاب کنید</option>
+                <option value="ابتدایی">ابتدایی</option>
+                <option value="متوسط">متوسط</option>
+                <option value="پیشرفته">پیشرفته</option>
+            </select>
+
+            <label for="listening_level">سطح شنیداری:</label>
+            <select id="listening_level" name="listening_level" required>
+                <option value="">انتخاب کنید</option>
+                <option value="ابتدایی">ابتدایی</option>
+                <option value="متوسط">متوسط</option>
+                <option value="پیشرفته">پیشرفته</option>
+            </select>
+
+            <label for="persian_courses">دوره‌های زبان فارسی:</label>
+            <input type="text" id="persian_courses" name="persian_courses" placeholder="مثلاً دوره مقدماتی" />
+
+            <label for="persian_institute">محل آموزش زبان فارسی:</label>
+            <input type="text" id="persian_institute" name="persian_institute" placeholder="مثلاً موسسه زبان تهران" />
+
+            <button type="submit">شروع آزمون</button>
+        </form>
+    </div>
+</body>
+</html>
