@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # حتما کلید امن انتخاب کن
 
-DB_PATH = 'adaptive_test.db'  # مسیر فایل دیتابیس (اگر متفاوت است تغییر بده)
+DB_PATH = 'questions.db'  # مسیر فایل دیتابیس (اگر متفاوت است تغییر بده)
 
 # اتصال به دیتابیس
 def get_db_connection():
