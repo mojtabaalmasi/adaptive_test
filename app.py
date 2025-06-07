@@ -67,6 +67,7 @@ def index():
         
         # انتخاب سوال اول (مثلاً کمترین b که هنوز پاسخ داده نشده)
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
+        print(f"اولین سوال انتخاب شده: {next_q}")
         session['current_question'] = next_q
         
         return redirect('/test')
@@ -76,6 +77,7 @@ def index():
 def select_next_question(theta, questions, answered_ids):
     # سوالاتی که پاسخ داده نشده اند را فیلتر کن
     remaining = [q for q in questions if q['id'] not in answered_ids]
+    print(f"تعداد سوالات باقی‌مانده: {len(remaining)}")
     if not remaining:
         return None
     # پیدا کردن سوال با بیشترین اطلاعات در نقطه θ
@@ -124,7 +126,7 @@ def test():
         # انتخاب سوال بعدی
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
         if next_q is None:
-            return redirect('/result')
+            return render_template('index.html', error="هیچ سوالی برای شروع آزمون یافت نشد.")
         
         session['current_question'] = next_q
         return redirect('/test')
