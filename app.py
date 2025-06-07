@@ -17,7 +17,7 @@ def get_db_connection():
 # گرفتن تمام سوالات و پارامترهای IRT آنها
 def get_all_questions():
     conn = get_db_connection()
-    questions = conn.execute("SELECT id, question_text, a, b, c FROM questions").fetchall()
+    questions = conn.execute("SELECT id, text, a, b, c FROM questions").fetchall()
     conn.close()
     return questions
 
