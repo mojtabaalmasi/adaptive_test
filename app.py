@@ -4,24 +4,22 @@ import irt
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # حتما کلید امن انتخاب شود
+app.secret_key = os.environ.get('SECRET_KEY', 'your_default_secret_key')
 
-DB_PATH = 'questions.db'  # مسیر فایل دیتابیس
+DB_PATH = 'questions.db'
+MAX_QUESTIONS = 30  # تعداد سوالات آزمون
 
-# اتصال به دیتابیس
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-# گرفتن تمام سوالات و پارامترهای IRT آنها
 def get_all_questions():
     conn = get_db_connection()
-    questions = conn.execute("SELECT id, text, a, b, c FROM questions").fetchall()
+    questions = conn.execute("SELECT id, text, option1, option2, option3, option4, correct_option, a, b, c FROM questions").fetchall()
     conn.close()
     return questions
 
-# گرفتن پارامترهای سوالات با ایندکس مشخص
 def get_item_params_by_ids(ids, questions):
     params = []
     for q in questions:
@@ -29,36 +27,64 @@ def get_item_params_by_ids(ids, questions):
             params.append((q['a'], q['b'], q['c']))
     return params
 
-# ذخیره نتایج شرکت‌کننده در دیتابیس
-def save_participant(name):
+def save_participant(data):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO participants (name) VALUES (?)", (name,))
+    cursor.execute("""
+        INSERT INTO participants (name, language, major, age, farsi_level, farsi_skills, farsi_courses , learning_place)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        data.get('name'),
+        
+        data.get('language'),
+        data.get('major'),
+        int(data.get('age', 0)),
+        data.get('farsi_level'),
+        data.get('farsi_skills'),
+		data.get('farsi_courses'),
+        data.get('learning_place')
+    ))
     conn.commit()
     pid = cursor.lastrowid
     conn.close()
     return pid
 
-def save_answer(participant_id, question_id, response):
+def save_answer(participant_id, question_id, selected_option):
     conn = get_db_connection()
-    conn.execute("INSERT INTO answers (participant_id, question_id, response) VALUES (?, ?, ?)",
-                 (participant_id, question_id, response))
+    conn.execute("INSERT INTO answers (participant_id, question_id, selected_option ,is_correct) VALUES (?, ?, ?, ?)",
+                 (participant_id, question_id, selected_option))
     conn.commit()
     conn.close()
 
-# صفحه ثبت‌نام و شروع آزمون
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        name = request.form.get('name')
-        if not name:
-            return render_template('index.html', error="لطفا نام خود را وارد کنید.")
+        # دریافت داده‌ها از فرم
+        data = {
+            'first_name': request.form.get('name'),
+           
+            'native_language': request.form.get('anguage'),
+            'major': request.form.get('major'),
+            'age': request.form.get('age'),
+            'persian_level': request.form.get('farsi_level'),
+			'persian_level': request.form.get('farsi_skills'),
+            'courses': request.form.get('farsi_coursescourses'),
+            'course_place': request.form.get('lastrowid_place')
+        }
 
-        # ذخیره شرکت‌کننده و مقداردهی اولیه session
-        participant_id = save_participant(name)
+        # اعتبارسنجی اولیه
+        if not data['name'] :
+            return render_template('index.html', error="نام و نام خانوادگی الزامی است.", data=data)
+        try:
+            age = int(data['age'])
+            if age <= 0 or age > 120:
+                raise ValueError()
+        except:
+            return render_template('index.html', error="سن نامعتبر است.", data=data)
+
+        participant_id = save_participant(data)
         session.clear()
         session['participant_id'] = participant_id
-        session['name'] = name
         session['theta'] = 0.0
         session['responses'] = []
         session['answered_questions'] = []
@@ -69,13 +95,12 @@ def index():
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
         if next_q is None:
             return render_template('index.html', error="هیچ سوالی برای شروع آزمون یافت نشد.")
-        
+
         session['current_question'] = next_q
         return redirect('/test')
 
     return render_template('index.html')
 
-# تابع انتخاب سوال بعدی
 def select_next_question(theta, questions, answered_ids):
     remaining = [q for q in questions if q['id'] not in answered_ids]
     if not remaining:
@@ -90,12 +115,9 @@ def select_next_question(theta, questions, answered_ids):
             best_q = q
     return best_q
 
-# صفحه آزمون
 @app.route('/test', methods=['GET', 'POST'])
 def test():
-    if 'participant_id' not in session:
-        return redirect('/')
-    if 'current_question' not in session:
+    if 'participant_id' not in session or 'current_question' not in session:
         return redirect('/')
 
     if request.method == 'POST':
@@ -115,7 +137,7 @@ def test():
         new_theta = irt.estimate_theta_mle(session['responses'], answered_params)
         session['theta'] = new_theta
 
-        if len(session['answered_questions']) >= 15:
+        if len(session['answered_questions']) >= MAX_QUESTIONS:
             return redirect('/result')
 
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
@@ -127,17 +149,18 @@ def test():
 
     return render_template('test.html', question=session['current_question'], theta=session['theta'])
 
-# صفحه نمایش نتیجه
 @app.route('/result')
 def result():
     if 'participant_id' not in session:
         return redirect('/')
 
     answered_params = get_item_params_by_ids(session['answered_questions'], session['questions'])
-    word_path = f"results/result_{session['participant_id']}.docx"
-    excel_path = f"results/result_{session['participant_id']}.xlsx"
+    participant_id = session['participant_id']
 
     os.makedirs('results', exist_ok=True)
+
+    word_path = f"results/result_{participant_id}.docx"
+    excel_path = f"results/result_{participant_id}.xlsx"
 
     irt.save_results_to_word(word_path, session['responses'], answered_params, session['theta'])
     irt.save_results_to_excel(excel_path, session['responses'], answered_params, session['theta'])
