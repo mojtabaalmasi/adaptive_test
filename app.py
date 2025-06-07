@@ -68,9 +68,16 @@ def index():
         # انتخاب سوال اول (مثلاً کمترین b که هنوز پاسخ داده نشده)
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
         print(f"اولین سوال انتخاب شده: {next_q}")
+        
+        if next_q is None:
+            return render_template('index.html', error="هیچ سوالی برای شروع آزمون یافت نشد.")
+        
         session['current_question'] = next_q
         return redirect('/test')
-     return render_template('index.html')
+    
+    # این خط باید دقیقا در سطح بیرونی if باشد
+    return render_template('index.html')
+
 
 # تابع انتخاب سوال بعدی
 def select_next_question(theta, questions, answered_ids):
