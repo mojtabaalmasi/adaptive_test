@@ -70,8 +70,8 @@ def index():
         print(f"اولین سوال انتخاب شده: {next_q}")
         session['current_question'] = next_q
         
-    return redirect('/test')
-    # return render_template('index.html')
+    #return redirect('/test')
+     return render_template('index.html')
 
 # تابع انتخاب سوال بعدی
 def select_next_question(theta, questions, answered_ids):
