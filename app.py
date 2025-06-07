@@ -33,7 +33,7 @@ def get_item_params_by_ids(ids, questions):
 def save_participant(name):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO participants (full_name) VALUES (?)", (name,))
+    cursor.execute("INSERT INTO participants (name) VALUES (?)", (name,))
     conn.commit()
     pid = cursor.lastrowid
     conn.close()
@@ -50,13 +50,13 @@ def save_answer(participant_id, question_id, response):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        full_name = request.form.get('full_name')
-        if not full_name:
+        name = request.form.get('name')
+        if not name:
             return render_template('index.html', error="لطفا نام خود را وارد کنید.")
         # ذخیره شرکت‌کننده و ذخیره در session
-        participant_id = save_participant(full_name)
+        participant_id = save_participant(name)
         session['participant_id'] = participant_id
-        session['full_name'] = full_name
+        session['name'] = name
         session['theta'] = 0.0
         session['responses'] = []
         session['answered_questions'] = []
