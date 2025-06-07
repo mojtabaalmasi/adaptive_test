@@ -1,85 +1,170 @@
+from flask import Flask, render_template, request, redirect, session, send_file
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, g
+import irt
+import os
 
 app = Flask(__name__)
-DATABASE = 'questions.db'
+app.secret_key = 'your_secret_key'  # حتما کلید امن انتخاب کن
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
-    return db
+DB_PATH = 'adaptive_test.db'  # مسیر فایل دیتابیس (اگر متفاوت است تغییر بده)
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
+# اتصال به دیتابیس
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# صفحه ثبت نام شرکت کننده
+# گرفتن تمام سوالات و پارامترهای IRT آنها
+def get_all_questions():
+    conn = get_db_connection()
+    questions = conn.execute("SELECT id, question_text, a, b, c FROM questions").fetchall()
+    conn.close()
+    return questions
+
+# گرفتن پارامترهای سوالات با ایندکس مشخص
+def get_item_params_by_ids(ids, questions):
+    params = []
+    for q in questions:
+        if q['id'] in ids:
+            params.append((q['a'], q['b'], q['c']))
+    return params
+
+# ذخیره نتایج شرکت‌کننده در دیتابیس
+def save_participant(name):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO participants (full_name) VALUES (?)", (name,))
+    conn.commit()
+    pid = cursor.lastrowid
+    conn.close()
+    return pid
+
+def save_answer(participant_id, question_id, response):
+    conn = get_db_connection()
+    conn.execute("INSERT INTO answers (participant_id, question_id, response) VALUES (?, ?, ?)",
+                 (participant_id, question_id, response))
+    conn.commit()
+    conn.close()
+
+# صفحه ثبت نام و شروع آزمون
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        full_name = request.form['full_name']
-        age = int(request.form['age'])
-        language = request.form['language']
-        db = get_db()
-        cursor = db.execute('INSERT INTO participants (full_name, age, language) VALUES (?, ?, ?)',
-                            (full_name, age, language))
-        db.commit()
-        participant_id = cursor.lastrowid
-        return redirect(url_for('test_question', participant_id=participant_id, question_number=1))
+        full_name = request.form.get('full_name')
+        if not full_name:
+            return render_template('index.html', error="لطفا نام خود را وارد کنید.")
+        # ذخیره شرکت‌کننده و ذخیره در session
+        participant_id = save_participant(full_name)
+        session['participant_id'] = participant_id
+        session['full_name'] = full_name
+        session['theta'] = 0.0
+        session['responses'] = []
+        session['answered_questions'] = []
+        
+        # گرفتن سوالات
+        questions = get_all_questions()
+        session['questions'] = [dict(q) for q in questions]  # تبدیل Row به dict برای JSON سازی
+        
+        # انتخاب سوال اول (مثلاً کمترین b که هنوز پاسخ داده نشده)
+        next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
+        session['current_question'] = next_q
+        
+        return redirect('/test')
     return render_template('index.html')
 
-# صفحه سوال آزمون - دریافت سوال بر اساس شماره و پارامترهای IRT (مثال ساده: بر اساس شماره سوال)
-@app.route('/test/<int:participant_id>/<int:question_number>', methods=['GET', 'POST'])
-def test_question(participant_id, question_number):
-    db = get_db()
+# تابع انتخاب سوال بعدی
+def select_next_question(theta, questions, answered_ids):
+    # سوالاتی که پاسخ داده نشده اند را فیلتر کن
+    remaining = [q for q in questions if q['id'] not in answered_ids]
+    if not remaining:
+        return None
+    # پیدا کردن سوال با بیشترین اطلاعات در نقطه θ
+    best_q = None
+    best_info = -1
+    for q in remaining:
+        info = irt.item_information(theta, q['a'], q['b'], q['c'])
+        if info > best_info:
+            best_info = info
+            best_q = q
+    return best_q
 
+# صفحه آزمون
+@app.route('/test', methods=['GET', 'POST'])
+def test():
+    if 'participant_id' not in session:
+        return redirect('/')
+    
     if request.method == 'POST':
-        selected_option = int(request.form['option'])
-        # گرفتن سوال قبلی
-        question = db.execute('SELECT * FROM questions WHERE id = ?', (question_number,)).fetchone()
-        if question is None:
-            return "سؤال پیدا نشد", 404
+        # دریافت پاسخ کاربر
+        answer = request.form.get('answer')
+        if answer is None or answer not in ['0', '1']:
+            return render_template('test.html', question=session['current_question'], error="لطفا پاسخ درست را انتخاب کنید.")
+        
+        answer_int = int(answer)
+        curr_q = session['current_question']
+        
+        # ذخیره پاسخ در دیتابیس
+        save_answer(session['participant_id'], curr_q['id'], answer_int)
+        
+        # آپدیت پاسخ‌ها و سوالات جواب داده شده در session
+        session['responses'].append(answer_int)
+        session['answered_questions'].append(curr_q['id'])
+        
+        # پارامترهای سوالات جواب داده شده
+        answered_params = get_item_params_by_ids(session['answered_questions'], session['questions'])
+        
+        # تخمین θ جدید
+        new_theta = irt.estimate_theta_mle(session['responses'], answered_params)
+        session['theta'] = new_theta
+        
+        # شرط توقف (مثال: حد اکثر 15 سوال)
+        if len(session['answered_questions']) >= 15:
+            return redirect('/result')
+        
+        # انتخاب سوال بعدی
+        next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
+        if next_q is None:
+            return redirect('/result')
+        
+        session['current_question'] = next_q
+        return redirect('/test')
+    
+    # نمایش سوال فعلی
+    return render_template('test.html', question=session.get('current_question'), theta=session.get('theta'))
 
-        # فرض کنید جواب درست گزینه 1 است برای مثال، تو پروژه‌ات باید درست ذخیره شده باشد
-        correct_option = 1  
-        correct = 1 if selected_option == correct_option else 0
+# صفحه نمایش نتیجه
+@app.route('/result')
+def result():
+    if 'participant_id' not in session:
+        return redirect('/')
+    # ذخیره نتایج در فایل ورد و اکسل
+    answered_params = get_item_params_by_ids(session['answered_questions'], session['questions'])
+    word_path = f"results/result_{session['participant_id']}.docx"
+    excel_path = f"results/result_{session['participant_id']}.xlsx"
+    
+    # اطمینان از وجود پوشه
+    os.makedirs('results', exist_ok=True)
+    
+    irt.save_results_to_word(word_path, session['responses'], answered_params, session['theta'])
+    irt.save_results_to_excel(excel_path, session['responses'], answered_params, session['theta'])
+    
+    return render_template('result.html', theta=session['theta'], word_file=word_path, excel_file=excel_path)
 
-        db.execute('INSERT INTO answers (participant_id, question_id, selected_option, correct) VALUES (?, ?, ?, ?)',
-                   (participant_id, question_number, selected_option, correct))
-        db.commit()
+# دانلود فایل ورد
+@app.route('/download/word')
+def download_word():
+    if 'participant_id' not in session:
+        return redirect('/')
+    word_path = f"results/result_{session['participant_id']}.docx"
+    return send_file(word_path, as_attachment=True)
 
-        # سوال بعدی را بارگذاری کن
-        next_question_number = question_number + 1
-        next_question = db.execute('SELECT * FROM questions WHERE id = ?', (next_question_number,)).fetchone()
-        if next_question:
-            return redirect(url_for('test_question', participant_id=participant_id, question_number=next_question_number))
-        else:
-            return redirect(url_for('test_result', participant_id=participant_id))
+# دانلود فایل اکسل
+@app.route('/download/excel')
+def download_excel():
+    if 'participant_id' not in session:
+        return redirect('/')
+    excel_path = f"results/result_{session['participant_id']}.xlsx"
+    return send_file(excel_path, as_attachment=True)
 
-    # GET: بارگذاری سوال
-    question = db.execute('SELECT * FROM questions WHERE id = ?', (question_number,)).fetchone()
-    if question is None:
-        return "سؤال پیدا نشد", 404
-
-    question_dict = {
-        'id': question['id'],
-        'text': question['text'],
-        'options': [question['option1'], question['option2'], question['option3'], question['option4']]
-    }
-    return render_template('test_question.html', question=question_dict, participant_id=participant_id)
-
-# صفحه نتایج آزمون
-@app.route('/result/<int:participant_id>')
-def test_result(participant_id):
-    db = get_db()
-    participant = db.execute('SELECT * FROM participants WHERE id = ?', (participant_id,)).fetchone()
-    answers = db.execute('SELECT * FROM answers WHERE participant_id = ?', (participant_id,)).fetchall()
-
-    correct_count = sum(a['correct'] for a in answers)
-    total = len(answers)
-
-    return render_template('test_result.html', participant=participant, correct_count=correct_count, total=total)
+if __name__ == '__main__':
+    app.run(debug=True)
