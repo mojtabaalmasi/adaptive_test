@@ -1,23 +1,63 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>نتایج آزمون</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f7f9fc;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        .result-card {
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 50px;
+            background-color: white;
+        }
+        .btn-custom {
+            background-color: #4b7bec;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <h1>نتایج آزمون انطباقی</h1>
-    <p>تخمین توانایی (θ): {{ theta }}</p>
 
-    <h3>نمودار احتمال پاسخ صحیح (ICC):</h3>
-    <img src="{{ icc_image }}" alt="ICC Chart" style="max-width: 600px;">
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="result-card">
+                <h2 class="text-center mb-4">نتایج آزمون انطباقی واژگان</h2>
 
-    <h3>نمودار اطلاعات آیتم:</h3>
-    <img src="{{ info_image }}" alt="Item Information Chart" style="max-width: 600px;">
+                <p class="fs-5"><strong>تخمین توانایی (θ):</strong> {{ theta }}</p>
 
-    <h3>فایل‌های نتایج:</h3>
-    <ul>
-        <li><a href="{{ excel_file }}" download>دانلود فایل اکسل</a></li>
-        <li><a href="{{ word_file }}" download>دانلود فایل ورد</a></li>
-    </ul>
+                <div class="row mt-4">
+                    <div class="col-md-6 text-center">
+                        <h5>نمودار احتمال پاسخ صحیح (ICC)</h5>
+                        <img src="{{ icc_image }}" alt="نمودار ICC" class="img-fluid rounded border">
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <h5>نمودار اطلاعات آیتم</h5>
+                        <img src="{{ info_image }}" alt="نمودار اطلاعات" class="img-fluid rounded border">
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h5>دانلود فایل‌های نتایج:</h5>
+                    <a href="{{ excel_file }}" class="btn btn-custom me-2" download>📊 دانلود فایل Excel</a>
+                    <a href="{{ word_file }}" class="btn btn-outline-primary" download>📝 دانلود فایل Word</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- فونت فارسی -->
+<link href="https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn.css" rel="stylesheet">
+
 </body>
 </html>

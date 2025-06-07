@@ -32,7 +32,25 @@ def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
         theta = theta_new
     return theta
 
-# ترسیم نمودار تابع مشخصه سوالات
+# تابع اطلاعات آیتم در θ
+def item_information(theta, a, b, c):
+    p = three_pl_probability(theta, a, b, c)
+    q = 1 - p
+    return (a ** 2) * ((p - c) ** 2) / ((1 - c) ** 2 * p * q + 1e-9)
+
+# انتخاب سؤال بعدی با بیشترین اطلاعات در θ فعلی
+def select_next_question(theta, all_item_params, answered_indices):
+    infos = []
+    for i, (a, b, c) in enumerate(all_item_params):
+        if i in answered_indices:
+            infos.append(-np.inf)  # سوالی که پاسخ داده شده را حذف کن
+        else:
+            info = item_information(theta, a, b, c)
+            infos.append(info)
+    next_q_index = np.argmax(infos)
+    return next_q_index
+
+# ترسیم نمودار تابع مشخصه سوالات (ICC)
 def plot_icc(item_params, save_path='icc.png'):
     theta_range = np.linspace(-4, 4, 100)
     plt.figure(figsize=(10, 6))
@@ -49,11 +67,6 @@ def plot_icc(item_params, save_path='icc.png'):
     plt.close()
 
 # ترسیم نمودار اطلاعات آزمون
-def item_information(theta, a, b, c):
-    p = three_pl_probability(theta, a, b, c)
-    q = 1 - p
-    return (a ** 2) * ((p - c) ** 2) / ((1 - c) ** 2 * p * q + 1e-9)
-
 def plot_item_information(item_params, save_path='item_info.png'):
     theta_range = np.linspace(-4, 4, 100)
     total_info = np.zeros_like(theta_range)

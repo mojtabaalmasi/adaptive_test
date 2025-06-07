@@ -1,13 +1,81 @@
-<!doctype html>
-<html>
-<head><title>ثبت نام آزمون</title></head>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت‌نام آزمون واژگان دانشگاهی</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- بوت‌استرپ -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        .card {
+            margin-top: 60px;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .btn-custom {
+            background-color: #4b7bec;
+            color: white;
+        }
+    </style>
+</head>
 <body>
-    <h1>ثبت نام آزمون</h1>
-    <form method="post">
-        نام کامل: <input type="text" name="full_name" required><br>
-        سن: <input type="number" name="age" required><br>
-        زبان مادری: <input type="text" name="language" required><br>
-        <button type="submit">شروع آزمون</button>
-    </form>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card p-4">
+                    <h3 class="text-center mb-4">فرم ثبت‌نام آزمون واژگان دانشگاهی</h3>
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">نام کامل</label>
+                            <input type="text" name="full_name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="age" class="form-label">سن</label>
+                            <input type="number" name="age" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="language" class="form-label">زبان مادری</label>
+                            <input type="text" name="language" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="major" class="form-label">رشته تحصیلی</label>
+                            <input type="text" name="major" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="farsi_level" class="form-label">سطح زبان فارسی</label>
+                            <select name="farsi_level" class="form-select" required>
+                                <option value="مقدماتی">مقدماتی</option>
+                                <option value="متوسط">متوسط</option>
+                                <option value="پیشرفته">پیشرفته</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="farsi_skills" class="form-label">مهارت‌های زبانی (خواندن، نوشتن...)</label>
+                            <input type="text" name="farsi_skills" class="form-control" placeholder="مثلاً: خواندن و شنیدن خوب، نوشتن ضعیف">
+                        </div>
+                        <div class="mb-3">
+                            <label for="farsi_courses" class="form-label">دوره‌های آموزشی زبان فارسی گذرانده‌شده</label>
+                            <textarea name="farsi_courses" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="learning_place" class="form-label">محل گذراندن دوره‌ها</label>
+                            <input type="text" name="learning_place" class="form-control">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-custom">شروع آزمون</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فونت فارسی (اختیاری اما توصیه‌شده) -->
+    <link href="https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn.css" rel="stylesheet">
 </body>
 </html>

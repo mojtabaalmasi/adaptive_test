@@ -1,14 +1,67 @@
-<!doctype html>
-<html>
-<head><title>سؤال {{ question.id }}</title></head>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سؤال {{ question.id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- بوت‌استرپ -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        .question-card {
+            margin-top: 50px;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .btn-custom {
+            background-color: #4b7bec;
+            color: white;
+        }
+    </style>
+</head>
 <body>
-    <h2>سؤال {{ question.id }}</h2>
-    <p>{{ question.text }}</p>
-    <form method="post">
-        {% for opt in question.options %}
-            <input type="radio" name="option" value="{{ loop.index }}" required> {{ opt }}<br>
-        {% endfor %}
-        <button type="submit">ثبت پاسخ</button>
-    </form>
+
+<div class="container">
+    <!-- نوار پیشرفت آزمون -->
+    <div class="mt-4">
+        <label>پیشرفت آزمون:</label>
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+                {{ progress_percent }}%
+            </div>
+        </div>
+    </div>
+
+    <!-- کارت سؤال -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-4 question-card">
+                <h4 class="mb-4 text-center">سؤال {{ question.id }}</h4>
+                <p class="fs-5">{{ question.text }}</p>
+                <form method="post">
+                    {% for opt in question.options %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="option" value="{{ loop.index }}" id="opt{{ loop.index }}" required>
+                            <label class="form-check-label" for="opt{{ loop.index }}">
+                                {{ opt }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-custom">ثبت پاسخ و ادامه</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- فونت فارسی -->
+<link href="https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn.css" rel="stylesheet">
+
 </body>
 </html>
