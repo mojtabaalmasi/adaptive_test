@@ -35,6 +35,8 @@
 
                 <p class="fs-5"><strong>تخمین توانایی (θ):</strong> {{ theta }}</p>
 
+                {# حذف یا فعال‌سازی نمودارها در صورت آماده بودن #}
+                {# 
                 <div class="row mt-4">
                     <div class="col-md-6 text-center">
                         <h5>نمودار احتمال پاسخ صحیح (ICC)</h5>
@@ -45,11 +47,12 @@
                         <img src="{{ info_image }}" alt="نمودار اطلاعات" class="img-fluid rounded border">
                     </div>
                 </div>
+                #}
 
                 <div class="mt-5">
                     <h5>دانلود فایل‌های نتایج:</h5>
-                    <a href="{{ excel_file }}" class="btn btn-custom me-2" download>📊 دانلود فایل Excel</a>
-                    <a href="{{ word_file }}" class="btn btn-outline-primary" download>📝 دانلود فایل Word</a>
+                    <a href="/download/excel" class="btn btn-custom me-2">📊 دانلود فایل Excel</a>
+                    <a href="/download/word" class="btn btn-outline-primary">📝 دانلود فایل Word</a>
                 </div>
             </div>
         </div>

@@ -7,12 +7,14 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_default_secret_key')
 
 DB_PATH = 'questions.db'
-MAX_QUESTIONS = 30  # تعداد سوالات آزمون
+MAX_QUESTIONS = 30
+
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def get_all_questions():
     conn = get_db_connection()
@@ -20,18 +22,16 @@ def get_all_questions():
     conn.close()
     return questions
 
+
 def get_item_params_by_ids(ids, questions):
-    params = []
-    for q in questions:
-        if q['id'] in ids:
-            params.append((q['a'], q['b'], q['c']))
-    return params
+    return [(q['a'], q['b'], q['c']) for q in questions if q['id'] in ids]
+
 
 def save_participant(data):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO participants (name, language, major, age, farsi_level, farsi_skills, farsi_courses , learning_place)
+        INSERT INTO participants (name, language, major, age, farsi_level, farsi_skills, farsi_courses, learning_place)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         data.get('name'),
@@ -48,12 +48,14 @@ def save_participant(data):
     conn.close()
     return pid
 
+
 def save_answer(participant_id, question_id, selected_option):
     conn = get_db_connection()
-    conn.execute("INSERT INTO answers (participant_id, question_id, selected_option ,is_correct) VALUES (?, ?, ?, ?)",
-                 (participant_id, question_id, selected_option, None))
+    conn.execute("INSERT INTO answers (participant_id, question_id, selected_option) VALUES (?, ?, ?)",
+                 (participant_id, question_id, selected_option))
     conn.commit()
     conn.close()
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -71,7 +73,6 @@ def index():
 
         if not data['name']:
             return render_template('index.html', error="نام و نام خانوادگی الزامی است.", data=data)
-
         try:
             age = int(data['age'])
             if age <= 0 or age > 120:
@@ -90,7 +91,7 @@ def index():
         session['questions'] = [dict(q) for q in questions]
 
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
-        if next_q is None:
+        if not next_q:
             return render_template('index.html', error="هیچ سوالی برای شروع آزمون یافت نشد.")
 
         session['current_question'] = next_q
@@ -98,19 +99,15 @@ def index():
 
     return render_template('index.html')
 
+
 def select_next_question(theta, questions, answered_ids):
     remaining = [q for q in questions if q['id'] not in answered_ids]
     if not remaining:
         return None
 
-    best_q = None
-    best_info = -1
-    for q in remaining:
-        info = irt.item_information(theta, q['a'], q['b'], q['c'])
-        if info > best_info:
-            best_info = info
-            best_q = q
+    best_q = max(remaining, key=lambda q: irt.item_information(theta, q['a'], q['b'], q['c']))
     return best_q
+
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
@@ -120,7 +117,7 @@ def test():
     if request.method == 'POST':
         answer = request.form.get('option')
         if answer not in ['1', '2', '3', '4']:
-            return render_template('test.html', question=session['current_question'], theta=session['theta'], error="لطفا یکی از گزینه‌ها را انتخاب کنید.")
+            return render_template('test.html', question=session['current_question'], theta=session['theta'], error="لطفاً یکی از گزینه‌ها را انتخاب کنید.")
 
         answer_int = int(answer)
         curr_q = session['current_question']
@@ -131,20 +128,20 @@ def test():
         session['answered_questions'].append(curr_q['id'])
 
         answered_params = get_item_params_by_ids(session['answered_questions'], session['questions'])
-        new_theta = irt.estimate_theta_mle(session['responses'], answered_params)
-        session['theta'] = new_theta
+        session['theta'] = irt.estimate_theta_mle(session['responses'], answered_params)
 
         if len(session['answered_questions']) >= MAX_QUESTIONS:
             return redirect('/result')
 
         next_q = select_next_question(session['theta'], session['questions'], session['answered_questions'])
-        if next_q is None:
+        if not next_q:
             return redirect('/result')
 
         session['current_question'] = next_q
         return redirect('/test')
 
     return render_template('test.html', question=session['current_question'], theta=session['theta'])
+
 
 @app.route('/result')
 def result():
@@ -155,14 +152,14 @@ def result():
     participant_id = session['participant_id']
 
     os.makedirs('results', exist_ok=True)
-
     word_path = f"results/result_{participant_id}.docx"
     excel_path = f"results/result_{participant_id}.xlsx"
 
     irt.save_results_to_word(word_path, session['responses'], answered_params, session['theta'])
     irt.save_results_to_excel(excel_path, session['responses'], answered_params, session['theta'])
 
-    return render_template('result.html', theta=session['theta'], word_file=word_path, excel_file=excel_path)
+    return render_template('result.html', theta=session['theta'], word_file="/download/word", excel_file="/download/excel")
+
 
 @app.route('/download/word')
 def download_word():
@@ -171,12 +168,14 @@ def download_word():
     word_path = f"results/result_{session['participant_id']}.docx"
     return send_file(word_path, as_attachment=True)
 
+
 @app.route('/download/excel')
 def download_excel():
     if 'participant_id' not in session:
         return redirect('/')
     excel_path = f"results/result_{session['participant_id']}.xlsx"
     return send_file(excel_path, as_attachment=True)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

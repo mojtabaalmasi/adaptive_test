@@ -1,8 +1,9 @@
+<!-- فایل templates/test.html -->
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>سؤال {{ question.id }}</title>
+    <title>سؤال {{ session.answered_questions | length + 1 }} از 30</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- بوت‌استرپ -->
@@ -31,7 +32,7 @@
     <div class="mt-4">
         <label>پیشرفت آزمون:</label>
         <div class="progress">
-            {% set progress_percent = (session.answered_questions | length / 15) * 100 %}
+            {% set progress_percent = (session.answered_questions | length / 30) * 100 %}
             <div class="progress-bar" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent|round(0, 'floor') }}" aria-valuemin="0" aria-valuemax="100">
                 {{ progress_percent|round(0, 'floor') }}%
             </div>
@@ -50,7 +51,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card p-4 question-card">
-                <h4 class="mb-4 text-center">سؤال {{ question.id }}</h4>
+                <h4 class="mb-4 text-center">سؤال {{ session.answered_questions | length + 1 }} از 30</h4>
                 <p class="fs-5">{{ question.text }}</p>
                 <form method="post">
                     {% for opt in question.options %}

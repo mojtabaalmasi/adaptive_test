@@ -7,7 +7,7 @@ from docx import Document
 def three_pl_probability(theta, a, b, c):
     return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
 
-# تابع درستنمایی کل
+# تابع درستنمایی کل (log-likelihood)
 def log_likelihood(theta, responses, item_params):
     prob = [three_pl_probability(theta, a, b, c) for a, b, c in item_params]
     likelihood = [
@@ -51,23 +51,24 @@ def select_next_question(theta, all_item_params, answered_indices):
     return next_q_index
 
 # ترسیم نمودار تابع مشخصه سوالات (ICC)
-def plot_icc(item_params, save_path='icc.png'):
+def plot_icc(item_params, save_path='static/icc.png'):
     theta_range = np.linspace(-4, 4, 100)
     plt.figure(figsize=(10, 6))
     for i, (a, b, c) in enumerate(item_params):
         probs = [three_pl_probability(t, a, b, c) for t in theta_range]
-        plt.plot(theta_range, probs, label=f"Q{i+1}")
+        plt.plot(theta_range, probs, label=f"سوال {i+1}")
     plt.xlabel('θ (توانایی)')
-    plt.ylabel('P(پاسخ درست)')
+    plt.ylabel('احتمال پاسخ صحیح')
     plt.title('نمودار تابع مشخصه سوالات (ICC)')
     plt.legend(fontsize=8, ncol=2)
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(save_path)
     plt.close()
+    return save_path  # بازگرداندن مسیر ذخیره
 
 # ترسیم نمودار اطلاعات آزمون
-def plot_item_information(item_params, save_path='item_info.png'):
+def plot_item_information(item_params, save_path='static/item_info.png'):
     theta_range = np.linspace(-4, 4, 100)
     total_info = np.zeros_like(theta_range)
     for a, b, c in item_params:
@@ -82,12 +83,13 @@ def plot_item_information(item_params, save_path='item_info.png'):
     plt.tight_layout()
     plt.savefig(save_path)
     plt.close()
+    return save_path  # بازگرداندن مسیر ذخیره
 
 # ذخیره نتایج در فایل Excel
 def save_results_to_excel(filepath, responses, item_params, theta):
     df = pd.DataFrame({
-        'Question': [f"Q{i+1}" for i in range(len(responses))],
-        'Response': responses,
+        'سوال': [f"سوال {i+1}" for i in range(len(responses))],
+        'پاسخ': responses,
         'a': [a for a, _, _ in item_params],
         'b': [b for _, b, _ in item_params],
         'c': [c for _, _, c in item_params],
@@ -109,7 +111,7 @@ def save_results_to_word(filepath, responses, item_params, theta):
     hdr[4].text = 'c'
     for i, (r, (a, b, c)) in enumerate(zip(responses, item_params)):
         row = table.add_row().cells
-        row[0].text = f"Q{i+1}"
+        row[0].text = f"سوال {i+1}"
         row[1].text = str(r)
         row[2].text = f"{a:.2f}"
         row[3].text = f"{b:.2f}"
