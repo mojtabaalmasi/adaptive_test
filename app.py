@@ -285,13 +285,15 @@ def result():
     icc_path = plot_icc(answered_params, save_path=f'static/icc_{uuid.uuid4().hex}.png')
     info_path = plot_item_information(answered_params, save_path=f'static/info_{uuid.uuid4().hex}.png')
 
-    return render_template('result.html', theta=theta, icc_image=icc_path, info_image=info_path)
-
+    user_name = session.get('name', 'کاربر ناشناس')
+    return render_template('result.html', theta=theta,user_name=user_name, icc_image=icc_path, info_image=info_path)
 
 
 @app.route('/register', methods=['POST'])
 def register():
+          
     name = request.form.get('name')
+    session['user_name'] = name
     age = request.form.get('age')
     language = request.form.get('language')
     major = request.form.get('major')
@@ -314,6 +316,11 @@ def register():
 
     # ذخیره آیدی در session برای استفاده در صفحات بعدی
     session['participant_id'] = participant_id
+    
+    # فرض کنیم نام کاربر رو از فرم ثبت‌نام می‌گیریم
+    name = request.form['name']
+    session['user_name'] = name
+
 
     # هدایت به صفحه آزمون (مثلاً /test)
     return redirect(url_for('test'))

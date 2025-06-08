@@ -70,7 +70,10 @@
 <body>
     <div class="container">
         <h1>نتایج آزمون انطباقی</h1>
-        <div class="theta-value">مقدار تخمینی θ (توانایی): {{ theta | round(3) }}</div>
+       
+		<p>نام آزمون‌دهنده: {{ user_name }}</p>
+		<p>توانایی تخمینی (θ): {{ theta }}</p>
+		<div class="theta-value">مقدار تخمینی θ (توانایی): {{ theta | round(3) }}</div>
 
         <div class="images">
             <div>
