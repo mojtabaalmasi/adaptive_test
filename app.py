@@ -56,17 +56,43 @@ def get_all_item_params():
 def three_pl_probability(theta, a, b, c):
     return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
 
-def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
+def estimate_theta_mle(responses, item_params, lr=0.005, max_iter=500, tol=1e-5):
     theta = 0.0
     for _ in range(max_iter):
         grad = 0.0
         for i, (a, b, c) in enumerate(item_params):
             p = three_pl_probability(theta, a, b, c)
             q = 1 - p
-            # grad of log-likelihood for each item
-            dL = a * (responses[i] - p) * (1 - c) / (p * q + 1e-9)
+            # اصلاح گرادیان ساده‌تر و ایمن‌تر
+            numerator = (responses[i] - p) * a * (1 - c)
+            denominator = p * q + 1e-9
+            dL = numerator / denominator
             grad += dL
         theta_new = theta + lr * grad
+        # محدود کردن θ در دامنه [-4, 4]
+        theta_new = max(min(theta_new, 4), -4)
+        if abs(theta_new - theta) < tol:
+            break
+        theta = theta_new
+    return float(theta)
+
+
+
+def estimate_theta_map(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
+    theta = 0.0
+    prior_mean = 0.0
+    prior_var = 1.0  # واریانس prior، می‌توانید مقدارش را تغییر دهید
+    for _ in range(max_iter):
+        grad = 0.0
+        for i, (a, b, c) in enumerate(item_params):
+            p = three_pl_probability(theta, a, b, c)
+            q = 1 - p
+            dL = a * (responses[i] - p) * (1 - c) / (p * q + 1e-9)
+            grad += dL
+        # گرادیان prior (نرمال با میانگین صفر و واریانس prior_var)
+        grad_prior = -(theta - prior_mean) / prior_var
+        grad_total = grad + grad_prior
+        theta_new = theta + lr * grad_total
         if abs(theta_new - theta) < tol:
             break
         theta = theta_new
@@ -214,7 +240,7 @@ def test():
     all_item_params = get_all_item_params()
     total_questions = len(all_item_params)
 
-    MIN_QUESTIONS = 5
+    MIN_QUESTIONS = 8
     MAX_QUESTIONS = 30
     THETA_CHANGE_THRESHOLD = 0.05
 
