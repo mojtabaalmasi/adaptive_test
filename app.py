@@ -9,6 +9,8 @@ import uuid
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # کلید مخفی ایمن
+app.secret_key = 'یک_کلید_محرمانه_و_دلخواه_اینجا_قرار_ده'
+
 
 DATABASE = 'questions.db'
 
@@ -163,35 +165,50 @@ def index():
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
+    # --- 1. بررسی اینکه کاربر ثبت‌نام کرده و participant_id در session هست ---
+    if 'participant_id' not in session:
+        return redirect(url_for('index'))
+
+    # --- 2. بررسی وجود answered_questions در session ---
     if 'answered_questions' not in session:
         return redirect(url_for('index'))
 
+    # --- 3. دریافت سوالات جواب داده شده و پاسخ‌ها از session ---
     answered = list(map(int, session.get('answered_questions', [])))
     responses = list(map(int, session.get('responses', [])))
+
+    # --- 4. دریافت مقدار θ (توانایی آزمون‌دهنده) ---
     theta = float(session.get('theta', 0.0))
 
+    # --- 5. دریافت پارامترهای همه سوالات ---
     all_item_params = get_all_item_params()
     total_questions = len(all_item_params)
 
     if request.method == 'POST':
         selected_option = request.form.get('answer')
+        # --- 6. اگر پاسخ انتخاب نشده، ارور نمایش بده ---
         if selected_option is None:
             current_q_index = answered[-1] if answered else 0
-            question = get_question_by_id(current_q_index )
+            question = get_question_by_id(current_q_index)
             progress = int(len(answered) / total_questions * 100)
             return render_template('test.html', question=question, error="لطفا یک گزینه را انتخاب کنید.", progress=progress)
 
+        # --- 7. ذخیره پاسخ جدید ---
         responses.append(int(selected_option))
         answered_params = [all_item_params[i] for i in answered]
         theta = estimate_theta_mle(responses, answered_params)
 
+        # --- 8. انتخاب سوال بعدی ---
         next_q = select_next_question(theta, all_item_params, answered)
+        # --- 9. اگر سوالی باقی نمانده یا همه سوالات جواب داده شده ---
         if next_q is None or len(answered) >= total_questions:
+            # ذخیره نهایی و هدایت به صفحه نتیجه
             session['theta'] = float(theta)
             session['answered_questions'] = list(map(int, answered))
             session['responses'] = list(map(int, responses))
             return redirect(url_for('result'))
 
+        # --- 10. آماده‌سازی برای سوال بعد ---
         answered.append(next_q)
         session['answered_questions'] = list(map(int, answered))
         session['responses'] = list(map(int, responses))
@@ -202,6 +219,7 @@ def test():
         progress = int(len(answered) / total_questions * 100)
         return render_template('test.html', question=question, progress=progress)
 
+    # --- 11. حالت GET: شروع آزمون یا ادامه آزمون ---
     if not answered:
         next_q = 0
         answered.append(next_q)
@@ -213,6 +231,8 @@ def test():
     question = get_question_by_id(next_q + 1)
     progress = int(len(answered) / total_questions * 100)
     return render_template('test.html', question=question, progress=progress)
+
+
 
 @app.route('/result')
 def result():
@@ -229,6 +249,40 @@ def result():
     info_path = plot_item_information(answered_params, save_path=f'static/info_{uuid.uuid4().hex}.png')
 
     return render_template('result.html', theta=theta, icc_image=icc_path, info_image=info_path)
+
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    name = request.form.get('name')
+    age = request.form.get('age')
+    language = request.form.get('language')
+    major = request.form.get('major')
+    farsi_level = request.form.get('farsi_level')
+    farsi_skills = request.form.get('farsi_skills')
+    farsi_courses = request.form.get('farsi_courses')
+    learning_place = request.form.get('learning_place')
+
+    conn = sqlite3.connect('questions.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO participants (name, age, language, major, farsi_level, farsi_skills, farsi_courses, learning_place)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (name, age, language, major, farsi_level, farsi_skills, farsi_courses, learning_place))
+    conn.commit()
+
+    # گرفتن آیدی آخرین ثبت شده
+    participant_id = cursor.lastrowid
+    conn.close()
+
+    # ذخیره آیدی در session برای استفاده در صفحات بعدی
+    session['participant_id'] = participant_id
+
+    # هدایت به صفحه آزمون (مثلاً /test)
+    return redirect(url_for('test'))
+
+
+
 
 @app.route('/download/<filetype>')
 def download(filetype):

@@ -2,61 +2,36 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>آزمون واژگان دانشگاهی - شروع آزمون</title>
-    <style>
-        body {
-            font-family: "Tahoma", sans-serif;
-            background-color: #f4f6f8;
-            margin: 0;
-            padding: 0;
-            direction: rtl;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #333;
-        }
-        .container {
-            background: white;
-            padding: 30px 40px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            max-width: 400px;
-            text-align: center;
-        }
-        h1 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-        p {
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            color: #555;
-        }
-        button {
-            background-color: #2980b9;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1.1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #1c5980;
-        }
-    </style>
+    <title>ثبت نام آزمون دهنده</title>
 </head>
 <body>
-    <div class="container">
-        <h1>آزمون واژگان دانشگاهی</h1>
-        <p>در این آزمون انطباقی، مهارت واژگان شما به صورت پویا و با استفاده از مدل ۳PL ارزیابی می‌شود.</p>
-        <form action="{{ url_for('test') }}" method="get">
-            <button type="submit">شروع آزمون</button>
-        </form>
-    </div>
+    <h1>فرم ثبت نام آزمون دهنده</h1>
+    <form action="/register" method="post">
+        <label for="name">نام و نام خانوادگی:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="age">سن:</label><br>
+        <input type="number" id="age" name="age" min="0" max="120"><br><br>
+
+        <label for="language">زبان مادری:</label><br>
+        <input type="text" id="language" name="language"><br><br>
+
+        <label for="major">رشته تحصیلی:</label><br>
+        <input type="text" id="major" name="major"><br><br>
+
+        <label for="farsi_level">سطح زبان فارسی:</label><br>
+        <input type="text" id="farsi_level" name="farsi_level"><br><br>
+
+        <label for="farsi_skills">مهارت‌های فارسی:</label><br>
+        <input type="text" id="farsi_skills" name="farsi_skills"><br><br>
+
+        <label for="farsi_courses">دوره‌های آموزش فارسی:</label><br>
+        <input type="text" id="farsi_courses" name="farsi_courses"><br><br>
+
+        <label for="learning_place">محل یادگیری فارسی:</label><br>
+        <input type="text" id="learning_place" name="learning_place"><br><br>
+
+        <button type="submit">ثبت نام</button>
+    </form>
 </body>
 </html>
