@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>ثبت‌نام آزمون واژگان دانشگاهی</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <!-- بوت‌استرپ -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
     <style>
         body {
             background-color: #f0f2f5;
@@ -24,65 +24,80 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card p-4">
-                    <h3 class="text-center mb-4">فرم ثبت‌نام آزمون واژگان دانشگاهی</h3>
-                    
-                    {% if error %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-4">
+                <h3 class="text-center mb-4">فرم ثبت‌نام آزمون واژگان دانشگاهی</h3>
+
+                {% if error %}
                     <div class="alert alert-danger">{{ error }}</div>
-                    {% endif %}
+                {% endif %}
 
-                    <form action="/" method="POST">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">نام و نام خانوادگی</label>
-                            <input type="text" name="name" id="name" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="age" class="form-label">سن</label>
-                            <input type="number" name="age" id="age" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label for="language" class="form-label">زبان مادری</label>
-                            <input type="text" name="language" id="language" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label for="major" class="form-label">رشته تحصیلی</label>
-                            <input type="text" name="major" id="major" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label for="farsi_level" class="form-label">سطح زبان فارسی</label>
-                            <select name="farsi_level" id="farsi_level" class="form-select">
-                                <option value="">انتخاب کنید</option>
-                                <option value="مقدماتی">مقدماتی</option>
-                                <option value="متوسط">متوسط</option>
-                                <option value="پیشرفته">پیشرفته</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="farsi_skills" class="form-label">مهارت‌های زبانی (خواندن، نوشتن...)</label>
-                            <input type="text" name="farsi_skills" id="farsi_skills" class="form-control" placeholder="مثلاً: خواندن و شنیدن خوب، نوشتن ضعیف">
-                        </div>
-                        <div class="mb-3">
-                            <label for="farsi_courses" class="form-label">دوره‌های آموزشی زبان فارسی گذرانده‌شده</label>
-                            <textarea name="farsi_courses" id="farsi_courses" class="form-control" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="learning_place" class="form-label">محل گذراندن دوره‌ها</label>
-                            <input type="text" name="learning_place" id="learning_place" class="form-control">
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-custom">شروع آزمون</button>
-                        </div>
-                    </form>
+                <form action="/" method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">نام و نام خانوادگی</label>
+                        <input type="text" name="name" id="name" class="form-control" required
+                               value="{{ data.name if data and data.name else '' }}" />
+                    </div>
 
-                </div>
+                    <div class="mb-3">
+                        <label for="age" class="form-label">سن</label>
+                        <input type="number" name="age" id="age" class="form-control"
+                               value="{{ data.age if data and data.age else '' }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="language" class="form-label">زبان مادری</label>
+                        <input type="text" name="language" id="language" class="form-control"
+                               value="{{ data.language if data and data.language else '' }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="major" class="form-label">رشته تحصیلی</label>
+                        <input type="text" name="major" id="major" class="form-control"
+                               value="{{ data.major if data and data.major else '' }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="farsi_level" class="form-label">سطح زبان فارسی</label>
+                        <select name="farsi_level" id="farsi_level" class="form-select">
+                            <option value="">انتخاب کنید</option>
+                            <option value="مقدماتی" {% if data and data.farsi_level == 'مقدماتی' %}selected{% endif %}>مقدماتی</option>
+                            <option value="متوسط" {% if data and data.farsi_level == 'متوسط' %}selected{% endif %}>متوسط</option>
+                            <option value="پیشرفته" {% if data and data.farsi_level == 'پیشرفته' %}selected{% endif %}>پیشرفته</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="farsi_skills" class="form-label">مهارت‌های زبانی (خواندن، نوشتن...)</label>
+                        <input type="text" name="farsi_skills" id="farsi_skills" class="form-control"
+                               placeholder="مثلاً: خواندن و شنیدن خوب، نوشتن ضعیف"
+                               value="{{ data.farsi_skills if data and data.farsi_skills else '' }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="farsi_courses" class="form-label">دوره‌های آموزشی زبان فارسی گذرانده‌شده</label>
+                        <textarea name="farsi_courses" id="farsi_courses" class="form-control" rows="2">{{ data.farsi_courses if data and data.farsi_courses else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="learning_place" class="form-label">محل گذراندن دوره‌ها</label>
+                        <input type="text" name="learning_place" id="learning_place" class="form-control"
+                               value="{{ data.learning_place if data and data.learning_place else '' }}" />
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-custom">شروع آزمون</button>
+                    </div>
+                </form>
+
             </div>
         </div>
     </div>
+</div>
 
-    <!-- فونت فارسی -->
-    <link href="https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn.css" rel="stylesheet">
+<!-- فونت فارسی -->
+<link href="https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn.css" rel="stylesheet" />
 </body>
 </html>
