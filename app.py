@@ -35,13 +35,12 @@ def save_participant(data):
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         data.get('name'),
-        
         data.get('language'),
         data.get('major'),
         int(data.get('age', 0)),
         data.get('farsi_level'),
         data.get('farsi_skills'),
-		data.get('farsi_courses'),
+        data.get('farsi_courses'),
         data.get('learning_place')
     ))
     conn.commit()
@@ -52,11 +51,11 @@ def save_participant(data):
 def save_answer(participant_id, question_id, selected_option):
     conn = get_db_connection()
     conn.execute("INSERT INTO answers (participant_id, question_id, selected_option ,is_correct) VALUES (?, ?, ?, ?)",
-                 (participant_id, question_id, selected_option))
+                 (participant_id, question_id, selected_option, None))
     conn.commit()
     conn.close()
 
-@@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         data = {
@@ -70,7 +69,6 @@ def index():
             'learning_place': request.form.get('learning_place')
         }
 
-        # اعتبارسنجی اولیه
         if not data['name']:
             return render_template('index.html', error="نام و نام خانوادگی الزامی است.", data=data)
 
@@ -100,6 +98,19 @@ def index():
 
     return render_template('index.html')
 
+def select_next_question(theta, questions, answered_ids):
+    remaining = [q for q in questions if q['id'] not in answered_ids]
+    if not remaining:
+        return None
+
+    best_q = None
+    best_info = -1
+    for q in remaining:
+        info = irt.item_information(theta, q['a'], q['b'], q['c'])
+        if info > best_info:
+            best_info = info
+            best_q = q
+    return best_q
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
