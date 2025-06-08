@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import uuid
 
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # کلید مخفی ایمن
 app.secret_key = 'یک_کلید_محرمانه_و_دلخواه_اینجا_قرار_ده'
@@ -20,6 +21,17 @@ def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE)
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+# همچنین برای بستن اتصال در پایان درخواست:
+
 
 def get_question_by_id(question_id):
     conn = get_db_connection()
@@ -198,14 +210,38 @@ def test():
         answered_params = [all_item_params[i] for i in answered]
         theta = estimate_theta_mle(responses, answered_params)
 
+        # --- ذخیره پاسخ در دیتابیس ---
+        db = get_db_connection()
+        cursor = db.cursor()
+        participant_id = session['participant_id']
+        current_question_id = answered[-1] + 1  # اگر id سوال‌ها 1-indexed است
+
+        cursor.execute(
+            "INSERT INTO answers (user_id, question_id, response) VALUES (?, ?, ?)",
+            (participant_id, current_question_id, int(selected_option))
+        )
+        db.commit()
+
         # --- 8. انتخاب سوال بعدی ---
         next_q = select_next_question(theta, all_item_params, answered)
+        
         # --- 9. اگر سوالی باقی نمانده یا همه سوالات جواب داده شده ---
         if next_q is None or len(answered) >= total_questions:
-            # ذخیره نهایی و هدایت به صفحه نتیجه
+            # ذخیره نهایی θ در session
             session['theta'] = float(theta)
             session['answered_questions'] = list(map(int, answered))
             session['responses'] = list(map(int, responses))
+
+            # --- ذخیره نمره نهایی در جدول user_results ---
+            # ابتدا چک کن آیا رکوردی از قبل هست یا نه (برای به‌روزرسانی)
+            cursor.execute("SELECT id FROM user_results WHERE user_id = ?", (participant_id,))
+            existing = cursor.fetchone()
+            if existing:
+                cursor.execute("UPDATE user_results SET theta = ? WHERE user_id = ?", (theta, participant_id))
+            else:
+                cursor.execute("INSERT INTO user_results (user_id, theta) VALUES (?, ?)", (participant_id, theta))
+            db.commit()
+
             return redirect(url_for('result'))
 
         # --- 10. آماده‌سازی برای سوال بعد ---
@@ -231,6 +267,7 @@ def test():
     question = get_question_by_id(next_q + 1)
     progress = int(len(answered) / total_questions * 100)
     return render_template('test.html', question=question, progress=progress)
+
 
 
 
