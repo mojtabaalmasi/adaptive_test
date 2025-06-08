@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>نتایج آزمون انطباقی</title>
+    <style>
+        body {
+            font-family: "Tahoma", sans-serif;
+            direction: rtl;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 30px 10px;
+            color: #333;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            padding: 25px 30px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .theta-value {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            color: #27ae60;
+        }
+        .images {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        .images img {
+            max-width: 320px;
+            width: 100%;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        }
+        .download-links a {
+            display: inline-block;
+            background-color: #2980b9;
+            color: white;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .download-links a:hover {
+            background-color: #1c5980;
+        }
+        .note {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>نتایج آزمون انطباقی</h1>
+        <div class="theta-value">مقدار تخمینی θ (توانایی): {{ theta | round(3) }}</div>
+
+        <div class="images">
+            <div>
+                <h3>نمودار تابع مشخصه سوالات (ICC)</h3>
+                <img src="{{ icc_image }}" alt="ICC Chart" />
+            </div>
+            <div>
+                <h3>نمودار تابع اطلاعات آزمون</h3>
+                <img src="{{ info_image }}" alt="Test Information Chart" />
+            </div>
+        </div>
+
+        <div class="download-links">
+            <a href="{{ url_for('download', filetype='excel') }}">دانلود فایل اکسل</a>
+            <a href="{{ url_for('download', filetype='word') }}">دانلود فایل ورد</a>
+        </div>
+
+        <div class="note">
+            توجه: برای مشاهده بهتر نمودارها، فایل‌ها را دانلود و باز کنید.
+        </div>
+    </div>
+</body>
+</html>

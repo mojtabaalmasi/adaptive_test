@@ -5,13 +5,15 @@ import pandas as pd
 from docx import Document
 import matplotlib.pyplot as plt
 import os
+import uuid
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # کلید امن را حتما تغییر دهید
+app.secret_key = os.urandom(24)  # کلید مخفی ایمن
 
-DATABASE = 'your_db_name.db'  # نام دیتابیس شما
+DATABASE = 'questions.db'
 
-# توابع مربوط به دیتابیس
+# ------------------ توابع دیتابیس ------------------
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -19,15 +21,12 @@ def get_db_connection():
 
 def get_question_by_id(question_id):
     conn = get_db_connection()
-    question = conn.execute(
-        "SELECT id, question_text, option1, option2, option3, option4 FROM questions WHERE id = ?", 
-        (question_id,)
-    ).fetchone()
+    question = conn.execute("SELECT id, text, option1, option2, option3, option4 FROM questions WHERE id = ?", (question_id,)).fetchone()
     conn.close()
     if question:
         return {
-            'id': question['id'],
-            'text': question['question_text'],
+            'id': int(question['id']),
+            'text': question['text'],
             'options': [question['option1'], question['option2'], question['option3'], question['option4']]
         }
     return None
@@ -36,9 +35,10 @@ def get_all_item_params():
     conn = get_db_connection()
     rows = conn.execute("SELECT a, b, c FROM questions ORDER BY id").fetchall()
     conn.close()
-    return [(row['a'], row['b'], row['c']) for row in rows]
+    return [(float(row['a']), float(row['b']), float(row['c'])) for row in rows]
 
-# توابع مدل 3PL
+# ------------------ توابع IRT ------------------
+
 def three_pl_probability(theta, a, b, c):
     return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
 
@@ -55,7 +55,7 @@ def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
         if abs(theta_new - theta) < tol:
             break
         theta = theta_new
-    return theta
+    return float(theta)
 
 def item_information(theta, a, b, c):
     p = three_pl_probability(theta, a, b, c)
@@ -69,12 +69,12 @@ def select_next_question(theta, all_item_params, answered_indices):
             infos.append(-np.inf)
         else:
             infos.append(item_information(theta, a, b, c))
-    next_q = np.argmax(infos)
-    if infos[next_q] == -np.inf:
-        return None
-    return next_q
+    next_q = int(np.argmax(infos))
+    return None if infos[next_q] == -np.inf else next_q
 
-def plot_icc(item_params, save_path='static/icc.png'):
+# ------------------ نمودار ------------------
+
+def plot_icc(item_params, save_path):
     theta_range = np.linspace(-4, 4, 100)
     plt.figure(figsize=(10, 6))
     for i, (a, b, c) in enumerate(item_params):
@@ -82,7 +82,7 @@ def plot_icc(item_params, save_path='static/icc.png'):
         plt.plot(theta_range, probs, label=f"سوال {i+1}")
     plt.xlabel('θ (توانایی)')
     plt.ylabel('احتمال پاسخ صحیح')
-    plt.title('نمودار تابع مشخصه سوالات (ICC)')
+    plt.title('تابع مشخصه سوالات (ICC)')
     plt.legend(fontsize=8, ncol=2)
     plt.grid(True)
     plt.tight_layout()
@@ -90,7 +90,7 @@ def plot_icc(item_params, save_path='static/icc.png'):
     plt.close()
     return save_path
 
-def plot_item_information(item_params, save_path='static/item_info.png'):
+def plot_item_information(item_params, save_path):
     theta_range = np.linspace(-4, 4, 100)
     total_info = np.zeros_like(theta_range)
     for a, b, c in item_params:
@@ -100,61 +100,60 @@ def plot_item_information(item_params, save_path='static/item_info.png'):
     plt.plot(theta_range, total_info, color='darkblue')
     plt.xlabel('θ (توانایی)')
     plt.ylabel('اطلاعات آزمون')
-    plt.title('نمودار تابع اطلاعات آزمون')
+    plt.title('تابع اطلاعات کل آزمون')
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(save_path)
     plt.close()
     return save_path
 
+# ------------------ ذخیره نتایج ------------------
+
 def save_results_to_excel(filepath, responses, answered_indices, theta):
     conn = get_db_connection()
-    rows = conn.execute("SELECT id, question_text, option1, option2, option3, option4, a, b, c FROM questions ORDER BY id").fetchall()
+    rows = conn.execute("SELECT text, a, b, c FROM questions ORDER BY id").fetchall()
     conn.close()
-
     data = []
-    for i, resp in zip(answered_indices, responses):
+    for i, r in zip(answered_indices, responses):
         row = rows[i]
         data.append({
-            'سوال': row['question_text'],
-            'پاسخ': resp,
+            'سوال': row['text'],
+            'پاسخ': r,
             'a': row['a'],
             'b': row['b'],
             'c': row['c']
         })
-
     df = pd.DataFrame(data)
-    df.loc[len(df.index)] = ['θ (توانایی)', theta, '', '', '']
+    df.loc[len(df)] = ['θ (توانایی)', theta, '', '', '']
     df.to_excel(filepath, index=False)
 
 def save_results_to_word(filepath, responses, answered_indices, theta):
     conn = get_db_connection()
-    rows = conn.execute("SELECT id, question_text, option1, option2, option3, option4, a, b, c FROM questions ORDER BY id").fetchall()
+    rows = conn.execute("SELECT text, a, b, c FROM questions ORDER BY id").fetchall()
     conn.close()
-
     doc = Document()
-    doc.add_heading('نتایج آزمون انطباقی (3PL)', level=1)
+    doc.add_heading('نتایج آزمون تطبیقی', 0)
     doc.add_paragraph(f'مقدار تخمینی θ: {theta:.3f}')
     table = doc.add_table(rows=1, cols=5)
-    hdr = table.rows[0].cells
-    hdr[0].text = 'سوال'
-    hdr[1].text = 'پاسخ'
-    hdr[2].text = 'a'
-    hdr[3].text = 'b'
-    hdr[4].text = 'c'
-
-    for i, resp in zip(answered_indices, responses):
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = 'سوال'
+    hdr_cells[1].text = 'پاسخ'
+    hdr_cells[2].text = 'a'
+    hdr_cells[3].text = 'b'
+    hdr_cells[4].text = 'c'
+    for i, r in zip(answered_indices, responses):
         row = rows[i]
         cells = table.add_row().cells
-        cells[0].text = row['question_text']
-        cells[1].text = str(resp)
-        cells[2].text = f"{row['a']:.2f}"
-        cells[3].text = f"{row['b']:.2f}"
-        cells[4].text = f"{row['c']:.2f}"
-
+        cells[0].text = row['text']
+        cells[1].text = str(r)
+        cells[2].text = str(row['a'])
+        cells[3].text = str(row['b'])
+        cells[4].text = str(row['c'])
     doc.save(filepath)
 
-@app.route('/', methods=['GET', 'POST'])
+# ------------------ مسیرها ------------------
+
+@app.route('/')
 def index():
     session.clear()
     session['answered_questions'] = []
@@ -167,63 +166,67 @@ def test():
     if 'answered_questions' not in session:
         return redirect(url_for('index'))
 
-    answered = session['answered_questions']
-    responses = session['responses']
-    theta = session.get('theta', 0.0)
+    answered = list(map(int, session.get('answered_questions', [])))
+    responses = list(map(int, session.get('responses', [])))
+    theta = float(session.get('theta', 0.0))
 
     all_item_params = get_all_item_params()
     total_questions = len(all_item_params)
 
     if request.method == 'POST':
-        selected_option = request.form.get('option')
+        selected_option = request.form.get('answer')
         if selected_option is None:
-            # پیام خطا برای انتخاب نکردن گزینه
-            last_q_id = answered[-1]
-            question = get_question_by_id(last_q_id + 1)
-            return render_template('test.html', question=question, error="لطفا یک گزینه را انتخاب کنید.")
+            current_q_index = answered[-1] if answered else 0
+            question = get_question_by_id(current_q_index )
+            progress = int(len(answered) / total_questions * 100)
+            return render_template('test.html', question=question, error="لطفا یک گزینه را انتخاب کنید.", progress=progress)
 
-        answer_int = int(selected_option)
-        responses.append(answer_int)
-        session['responses'] = responses
-
-        # تخمین θ با پاسخ‌های فعلی
+        responses.append(int(selected_option))
         answered_params = [all_item_params[i] for i in answered]
         theta = estimate_theta_mle(responses, answered_params)
-        session['theta'] = theta
 
-    # انتخاب سوال بعدی
-    next_q = select_next_question(theta, all_item_params, answered)
-    if next_q is None or len(answered) >= total_questions:
-        return redirect(url_for('result'))
+        next_q = select_next_question(theta, all_item_params, answered)
+        if next_q is None or len(answered) >= total_questions:
+            session['theta'] = float(theta)
+            session['answered_questions'] = list(map(int, answered))
+            session['responses'] = list(map(int, responses))
+            return redirect(url_for('result'))
 
-    # افزودن سوال جدید به لیست پاسخ داده شده (اگر هنوز اضافه نشده)
-    if len(answered) < len(responses):
-        # یعنی الان سوال قبلی جواب داده شده، پس سوال جدید را اضافه می‌کنیم
         answered.append(next_q)
-    elif len(answered) == 0:
+        session['answered_questions'] = list(map(int, answered))
+        session['responses'] = list(map(int, responses))
+        session['theta'] = float(theta)
+        session.modified = True
+
+        question = get_question_by_id(next_q + 1)
+        progress = int(len(answered) / total_questions * 100)
+        return render_template('test.html', question=question, progress=progress)
+
+    if not answered:
+        next_q = 0
         answered.append(next_q)
+        session['answered_questions'] = list(map(int, answered))
+        session.modified = True
+    else:
+        next_q = answered[-1]
 
-    session['answered_questions'] = answered
-    session.modified = True
-
-    question = get_question_by_id(next_q + 1)  # چون id سوالات در دیتابیس معمولاً از 1 شروع می‌شود
-
-    return render_template('test.html', question=question)
+    question = get_question_by_id(next_q + 1)
+    progress = int(len(answered) / total_questions * 100)
+    return render_template('test.html', question=question, progress=progress)
 
 @app.route('/result')
 def result():
     if 'responses' not in session or 'answered_questions' not in session:
         return redirect(url_for('index'))
 
-    responses = session['responses']
-    answered = session['answered_questions']
-    theta = session.get('theta', 0.0)
-
+    responses = list(map(int, session['responses']))
+    answered = list(map(int, session['answered_questions']))
+    theta = float(session.get('theta', 0.0))
     all_item_params = get_all_item_params()
     answered_params = [all_item_params[i] for i in answered]
 
-    icc_path = plot_icc(answered_params, save_path='static/icc.png')
-    info_path = plot_item_information(answered_params, save_path='static/item_info.png')
+    icc_path = plot_icc(answered_params, save_path=f'static/icc_{uuid.uuid4().hex}.png')
+    info_path = plot_item_information(answered_params, save_path=f'static/info_{uuid.uuid4().hex}.png')
 
     return render_template('result.html', theta=theta, icc_image=icc_path, info_image=info_path)
 
@@ -232,16 +235,17 @@ def download(filetype):
     if 'responses' not in session or 'answered_questions' not in session:
         return redirect(url_for('index'))
 
-    responses = session['responses']
-    answered = session['answered_questions']
-    theta = session.get('theta', 0.0)
+    responses = list(map(int, session['responses']))
+    answered = list(map(int, session['answered_questions']))
+    theta = float(session.get('theta', 0.0))
 
+    filename = f'results_{uuid.uuid4().hex}'
     if filetype == 'excel':
-        filepath = 'results.xlsx'
+        filepath = f'static/{filename}.xlsx'
         save_results_to_excel(filepath, responses, answered, theta)
         return send_file(filepath, as_attachment=True)
     elif filetype == 'word':
-        filepath = 'results.docx'
+        filepath = f'static/{filename}.docx'
         save_results_to_word(filepath, responses, answered, theta)
         return send_file(filepath, as_attachment=True)
     else:

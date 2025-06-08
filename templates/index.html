@@ -1,103 +1,62 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8" />
-    <title>ثبت‌نام آزمون واژگان دانشگاهی</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <!-- بوت‌استرپ -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    <title>آزمون واژگان دانشگاهی - شروع آزمون</title>
     <style>
         body {
-            background-color: #f0f2f5;
-            font-family: 'Vazirmatn', sans-serif;
+            font-family: "Tahoma", sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
         }
-        .card {
-            margin-top: 60px;
-            border-radius: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        .container {
+            background: white;
+            padding: 30px 40px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
         }
-        .btn-custom {
-            background-color: #4b7bec;
+        h1 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        button {
+            background-color: #2980b9;
             color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #1c5980;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card p-4">
-                <h3 class="text-center mb-4">فرم ثبت‌نام آزمون واژگان دانشگاهی</h3>
-
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-
-                <form action="/" method="POST">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">نام و نام خانوادگی</label>
-                        <input type="text" name="name" id="name" class="form-control" required
-                               value="{{ data.name if data and data.name else '' }}" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="age" class="form-label">سن</label>
-                        <input type="number" name="age" id="age" class="form-control"
-                               value="{{ data.age if data and data.age else '' }}" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="language" class="form-label">زبان مادری</label>
-                        <input type="text" name="language" id="language" class="form-control"
-                               value="{{ data.language if data and data.language else '' }}" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="major" class="form-label">رشته تحصیلی</label>
-                        <input type="text" name="major" id="major" class="form-control"
-                               value="{{ data.major if data and data.major else '' }}" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="farsi_level" class="form-label">سطح زبان فارسی</label>
-                        <select name="farsi_level" id="farsi_level" class="form-select">
-                            <option value="">انتخاب کنید</option>
-                            <option value="مقدماتی" {% if data and data.farsi_level == 'مقدماتی' %}selected{% endif %}>مقدماتی</option>
-                            <option value="متوسط" {% if data and data.farsi_level == 'متوسط' %}selected{% endif %}>متوسط</option>
-                            <option value="پیشرفته" {% if data and data.farsi_level == 'پیشرفته' %}selected{% endif %}>پیشرفته</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="farsi_skills" class="form-label">مهارت‌های زبانی (خواندن، نوشتن...)</label>
-                        <input type="text" name="farsi_skills" id="farsi_skills" class="form-control"
-                               placeholder="مثلاً: خواندن و شنیدن خوب، نوشتن ضعیف"
-                               value="{{ data.farsi_skills if data and data.farsi_skills else '' }}" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="farsi_courses" class="form-label">دوره‌های آموزشی زبان فارسی گذرانده‌شده</label>
-                        <textarea name="farsi_courses" id="farsi_courses" class="form-control" rows="2">{{ data.farsi_courses if data and data.farsi_courses else '' }}</textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="learning_place" class="form-label">محل گذراندن دوره‌ها</label>
-                        <input type="text" name="learning_place" id="learning_place" class="form-control"
-                               value="{{ data.learning_place if data and data.learning_place else '' }}" />
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-custom">شروع آزمون</button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
+    <div class="container">
+        <h1>آزمون واژگان دانشگاهی</h1>
+        <p>در این آزمون انطباقی، مهارت واژگان شما به صورت پویا و با استفاده از مدل ۳PL ارزیابی می‌شود.</p>
+        <form action="{{ url_for('test') }}" method="get">
+            <button type="submit">شروع آزمون</button>
+        </form>
     </div>
-</div>
-
-<!-- فونت فارسی -->
-<link href="https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn.css" rel="stylesheet" />
 </body>
 </html>
