@@ -154,7 +154,7 @@ def save_results_to_word(filepath, responses, answered_indices, theta):
 
     doc.save(filepath)
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
     session.clear()
     session['answered_questions'] = []
