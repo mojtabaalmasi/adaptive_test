@@ -271,6 +271,7 @@ def test():
 
 
 
+
 @app.route('/result')
 def result():
     if 'responses' not in session or 'answered_questions' not in session:
@@ -286,8 +287,21 @@ def result():
     info_path = plot_item_information(answered_params, save_path=f'static/info_{uuid.uuid4().hex}.png')
 
     user_name = session.get('name', 'کاربر ناشناس')
-    return render_template('result.html', theta=theta,user_name=user_name, icc_image=icc_path, info_image=info_path)
 
+    # تحلیل ساده بر اساس θ
+    if theta < -1:
+        interpretation = "توانایی شما پایین‌تر از حد متوسط است."
+    elif -1 <= theta <= 1:
+        interpretation = "توانایی شما در سطح متوسط قرار دارد."
+    else:
+        interpretation = "توانایی شما بالاتر از حد متوسط است."
+
+    return render_template('result.html',
+                           theta=theta,
+                           user_name=user_name,
+                           icc_image=icc_path,
+                           info_image=info_path,
+                           interpretation=interpretation)
 
 @app.route('/register', methods=['POST'])
 def register():

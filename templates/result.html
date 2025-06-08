@@ -85,6 +85,13 @@
                 <img src="{{ info_image }}" alt="Test Information Chart" />
             </div>
         </div>
+		
+		
+		<h2>نتیجه آزمون برای: {{ user_name }}</h2>
+		<p>امتیاز توانایی (θ): {{ theta }}</p>
+		<p>تفسیر: {{ interpretation }}</p>
+		<img src="{{ url_for('static', filename=icc_image.split('static/')[1]) }}" alt="ICC Plot" />
+		<img src="{{ url_for('static', filename=info_image.split('static/')[1]) }}" alt="Information Plot" />
 
         <div class="download-links">
             <a href="{{ url_for('download', filetype='excel') }}">دانلود فایل اکسل</a>
