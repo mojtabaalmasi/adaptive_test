@@ -59,10 +59,11 @@ def three_pl_probability(theta, a, b, c):
 def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
     theta = 0.0
     for _ in range(max_iter):
-        grad = 0
+        grad = 0.0
         for i, (a, b, c) in enumerate(item_params):
             p = three_pl_probability(theta, a, b, c)
             q = 1 - p
+            # grad of log-likelihood for each item
             dL = a * (responses[i] - p) * (1 - c) / (p * q + 1e-9)
             grad += dL
         theta_new = theta + lr * grad
@@ -71,10 +72,16 @@ def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
         theta = theta_new
     return float(theta)
 
+
 def item_information(theta, a, b, c):
     p = three_pl_probability(theta, a, b, c)
     q = 1 - p
-    return (a ** 2) * ((p - c) ** 2) / ((1 - c) ** 2 * p * q + 1e-9)
+    denominator = ((1 - c) ** 2 * p * q) + 1e-9
+    if p <= 0 or p >= 1 or np.isnan(p) or np.isnan(q) or denominator <= 1e-9:
+        return -np.inf  # اطلاعات بی‌ارزش یا محاسبه‌ناپذیر
+    info = (a ** 2) * ((p - c) ** 2) / denominator
+    return info if not np.isnan(info) and info > 1e-6 else -np.inf
+
 
 def select_next_question(theta, all_item_params, answered_indices):
     infos = []
@@ -82,9 +89,18 @@ def select_next_question(theta, all_item_params, answered_indices):
         if i in answered_indices:
             infos.append(-np.inf)
         else:
-            infos.append(item_information(theta, a, b, c))
+            info = item_information(theta, a, b, c)
+            infos.append(info)
+
+    print("اطلاعات سوالات:", infos)
+
+    if all(info == -np.inf for info in infos):
+        print("❌ هیچ سوال قابل انتخابی وجود ندارد.")
+        return None
+
     next_q = int(np.argmax(infos))
-    return None if infos[next_q] == -np.inf else next_q
+    return next_q
+
 
 # ------------------ نمودار ------------------
 
@@ -165,6 +181,13 @@ def save_results_to_word(filepath, responses, answered_indices, theta):
         cells[4].text = str(row['c'])
     doc.save(filepath)
 
+def get_correct_answer(question_id):
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute("SELECT correct_option FROM questions WHERE id = ?", (question_id,))
+    result = cursor.fetchone()
+    return result['correct_option'] if result else None
+
 # ------------------ مسیرها ------------------
 
 @app.route('/')
@@ -177,63 +200,60 @@ def index():
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
-    # --- 1. بررسی اینکه کاربر ثبت‌نام کرده و participant_id در session هست ---
     if 'participant_id' not in session:
         return redirect(url_for('index'))
 
-    # --- 2. بررسی وجود answered_questions در session ---
+    # اگر جواب سوالات قبلی وجود ندارد، شروع مجدد به index
     if 'answered_questions' not in session:
         return redirect(url_for('index'))
 
-    # --- 3. دریافت سوالات جواب داده شده و پاسخ‌ها از session ---
     answered = list(map(int, session.get('answered_questions', [])))
     responses = list(map(int, session.get('responses', [])))
-
-    # --- 4. دریافت مقدار θ (توانایی آزمون‌دهنده) ---
     theta = float(session.get('theta', 0.0))
 
-    # --- 5. دریافت پارامترهای همه سوالات ---
     all_item_params = get_all_item_params()
     total_questions = len(all_item_params)
 
+    MIN_QUESTIONS = 5
+    MAX_QUESTIONS = 30
+    THETA_CHANGE_THRESHOLD = 0.05
+
     if request.method == 'POST':
         selected_option = request.form.get('answer')
-        # --- 6. اگر پاسخ انتخاب نشده، ارور نمایش بده ---
         if selected_option is None:
             current_q_index = answered[-1] if answered else 0
-            question = get_question_by_id(current_q_index)
+            question = get_question_by_id(current_q_index + 1)
             progress = int(len(answered) / total_questions * 100)
             return render_template('test.html', question=question, error="لطفا یک گزینه را انتخاب کنید.", progress=progress)
 
-        # --- 7. ذخیره پاسخ جدید ---
-        responses.append(int(selected_option))
-        answered_params = [all_item_params[i] for i in answered]
-        theta = estimate_theta_mle(responses, answered_params)
+        # سوال فعلی (آخرین سوال جواب داده شده)
+        current_question_id = answered[-1] + 1
+        correct_option = get_correct_answer(current_question_id)  # گزینه صحیح سوال
+        is_correct = int(selected_option) == correct_option
+        responses.append(1 if is_correct else 0)
 
-        # --- ذخیره پاسخ در دیتابیس ---
+        # تخمین تتا با پاسخ‌های موجود و پارامتر سوالات جواب داده شده
+        answered_params = [all_item_params[i] for i in answered]
+        old_theta = theta
+        theta = estimate_theta_mle(responses, answered_params)
+        theta_change = abs(theta - old_theta)
+        print(f"θ تغییر: {theta_change:.4f}, آستانه: {THETA_CHANGE_THRESHOLD}")
+
+        # ذخیره پاسخ در دیتابیس
         db = get_db_connection()
         cursor = db.cursor()
         participant_id = session['participant_id']
-        current_question_id = answered[-1] + 1  # اگر id سوال‌ها 1-indexed است
-
         cursor.execute(
             "INSERT INTO answers (user_id, question_id, response) VALUES (?, ?, ?)",
             (participant_id, current_question_id, int(selected_option))
         )
         db.commit()
 
-        # --- 8. انتخاب سوال بعدی ---
-        next_q = select_next_question(theta, all_item_params, answered)
-        
-        # --- 9. اگر سوالی باقی نمانده یا همه سوالات جواب داده شده ---
-        if next_q is None or len(answered) >= total_questions:
-            # ذخیره نهایی θ در session
-            session['theta'] = float(theta)
-            session['answered_questions'] = list(map(int, answered))
-            session['responses'] = list(map(int, responses))
+        num_answered = len(answered) + 1  # چون الان پاسخ جدید هم اضافه شده
 
-            # --- ذخیره نمره نهایی در جدول user_results ---
-            # ابتدا چک کن آیا رکوردی از قبل هست یا نه (برای به‌روزرسانی)
+        # شرط پایان آزمون اصلاح شده (بدون +1 اضافی)
+        if (num_answered >= MIN_QUESTIONS and theta_change < THETA_CHANGE_THRESHOLD) or num_answered >= MAX_QUESTIONS:
+            print("آزمون پایان یافت - شرط پایان برقرار است.")
             cursor.execute("SELECT id FROM user_results WHERE user_id = ?", (participant_id,))
             existing = cursor.fetchone()
             if existing:
@@ -242,10 +262,25 @@ def test():
                 cursor.execute("INSERT INTO user_results (user_id, theta) VALUES (?, ?)", (participant_id, theta))
             db.commit()
 
+            # ذخیره وضعیت نهایی در سشن
+            session['theta'] = float(theta)
+            session['answered_questions'] = list(map(int, answered))
+            session['responses'] = list(map(int, responses))
             return redirect(url_for('result'))
 
-        # --- 10. آماده‌سازی برای سوال بعد ---
+        # انتخاب سوال بعدی
+        next_q = select_next_question(theta, all_item_params, answered)
+        if next_q is None:
+            print("هیچ سوال جدیدی برای انتخاب وجود ندارد، انتقال به نتیجه.")
+            session['theta'] = float(theta)
+            session['answered_questions'] = list(map(int, answered))
+            session['responses'] = list(map(int, responses))
+            return redirect(url_for('result'))
+
+        # افزودن سوال بعدی به لیست جواب داده شده
         answered.append(next_q)
+
+        # به‌روزرسانی سشن
         session['answered_questions'] = list(map(int, answered))
         session['responses'] = list(map(int, responses))
         session['theta'] = float(theta)
@@ -255,11 +290,13 @@ def test():
         progress = int(len(answered) / total_questions * 100)
         return render_template('test.html', question=question, progress=progress)
 
-    # --- 11. حالت GET: شروع آزمون یا ادامه آزمون ---
+    # حالت GET برای اولین بار ورود به آزمون
     if not answered:
         next_q = 0
         answered.append(next_q)
         session['answered_questions'] = list(map(int, answered))
+        session['responses'] = []
+        session['theta'] = 0.0
         session.modified = True
     else:
         next_q = answered[-1]
@@ -267,8 +304,6 @@ def test():
     question = get_question_by_id(next_q + 1)
     progress = int(len(answered) / total_questions * 100)
     return render_template('test.html', question=question, progress=progress)
-
-
 
 
 
