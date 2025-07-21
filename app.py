@@ -398,7 +398,7 @@ def register():
 
 
     # هدایت به صفحه آزمون (مثلاً /test)
-    return redirect(url_for('test'))
+    return redirect(url_for('pretest'))
 
 
 
@@ -428,3 +428,41 @@ if __name__ == '__main__':
     if not os.path.exists('static'):
         os.makedirs('static')
     app.run(debug=True)
+
+
+@app.route('/pretest', methods=['GET', 'POST'])
+def pretest():
+    if 'participant_id' not in session:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        participant_id = session['participant_id']
+        native_speaker = bool(int(request.form['native_speaker']))
+        university = request.form['university']
+        field = request.form['field_of_study']
+        level = request.form['education_level']
+        samfa_taken = bool(int(request.form['samfa_taken']))
+        samfa_score = request.form['samfa_score'] or None
+        vocab_writing = request.form['vocab_writing']
+        vocab_speaking = request.form['vocab_speaking']
+        vocab_reading = request.form['vocab_reading']
+        vocab_listening = request.form['vocab_listening']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO pretest_questionnaire (
+                participant_id, native_speaker, university, field_of_study,
+                education_level, samfa_taken, samfa_score,
+                vocab_writing, vocab_speaking, vocab_reading, vocab_listening
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (participant_id, native_speaker, university, field, level,
+              samfa_taken, samfa_score, vocab_writing, vocab_speaking,
+              vocab_reading, vocab_listening))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('test'))  # بعد از پرسشنامه به آزمون برود
+
+    return render_template('pretest.html')

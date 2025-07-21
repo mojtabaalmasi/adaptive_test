@@ -1,106 +1,11 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ثبت‌نام آزمون‌دهنده</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: #f8f9fa;
-            padding-top: 2rem;
-        }
-        header {
-            background-color: #0d6efd;
-            color: white;
-            padding: 1rem 0;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-        header img {
-            height: 60px;
-            margin-bottom: 0.5rem;
-        }
-        h1 {
-            font-size: 1.8rem;
-            margin: 0;
-        }
-        .form-container {
-            background-color: #ffffff;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: auto;
-        }
-        label {
-            font-weight: 600;
-        }
-        button {
-            width: 100%;
-            padding: 0.75rem;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>وب‌سایت من</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
-    <!-- هدر با لوگو -->
-    <header>
-        <img src="/static/logo.png" alt="لوگوی سایت">
-        <h1>آزمون انطباقی واژگان دانشگاهی زبان فارسی</h1>
-		
-		<p><h5>در این آزمون سوالات براساس پاسخ درست یا نادرست شما به سوالی فعلی انتخاب می شوند و در نهایت در صفحه نتایج تحلیل و نمودارهای سطح توانایی خود در زمینه واژگان فارسی دانشگاهی را مشاهده میکنید</h3></p>
-    </header>
-
-    <!-- فرم ثبت‌نام -->
-    <div class="form-container">
-        <form action="/register" method="post">
-            <div class="mb-3">
-                <label for="name" class="form-label">نام و نام خانوادگی:</label>
-                <input type="text" id="name" name="name" class="form-control" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="age" class="form-label">سن:</label>
-                <input type="number" id="age" name="age" class="form-control" min="0" max="120">
-            </div>
-
-            <div class="mb-3">
-                <label for="language" class="form-label">زبان مادری:</label>
-                <input type="text" id="language" name="language" class="form-control">
-            </div>
-
-            <div class="mb-3">
-                <label for="major" class="form-label">رشته تحصیلی:</label>
-                <input type="text" id="major" name="major" class="form-control">
-            </div>
-
-            <div class="mb-3">
-                <label for="farsi_level" class="form-label">سطح زبان فارسی:</label>
-                <input type="text" id="farsi_level" name="farsi_level" class="form-control">
-            </div>
-
-            <div class="mb-3">
-                <label for="farsi_skills" class="form-label">مهارت‌های فارسی:</label>
-                <input type="text" id="farsi_skills" name="farsi_skills" class="form-control">
-            </div>
-
-            <div class="mb-3">
-                <label for="farsi_courses" class="form-label">دوره‌های آموزش فارسی:</label>
-                <input type="text" id="farsi_courses" name="farsi_courses" class="form-control">
-            </div>
-
-            <div class="mb-3">
-                <label for="learning_place" class="form-label">محل یادگیری فارسی:</label>
-                <input type="text" id="learning_place" name="learning_place" class="form-control">
-            </div>
-
-            <button type="submit" class="btn btn-primary">ثبت‌نام</button>
-        </form>
-    </div>
-
+    <h1>به وب‌سایت من خوش آمدید</h1>
 </body>
 </html>

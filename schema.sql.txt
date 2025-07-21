@@ -15,6 +15,7 @@ CREATE TABLE participants (
     learning_place TEXT
 );
 
+
 CREATE TABLE answers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
