@@ -1,0 +1,89 @@
+<!-- templates/learner_pretest.html -->
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>پرسشنامه فارسی‌آموز</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background-color: #f7f7f7;
+            font-family: 'Vazir', sans-serif;
+        }
+        .form-container {
+            width: 600px;
+            margin: 80px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 25px;
+            background-color: #2980b9;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1f6396;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>پرسشنامه فارسی‌آموز</h2>
+        <form method="POST">
+            <label>نام و نام خانوادگی:</label>
+            <input type="text" name="name" required>
+
+            <label>نام دانشگاه:</label>
+            <input type="text" name="university">
+
+            <label>رشته تحصیلی:</label>
+            <input type="text" name="major">
+
+            <label>مقطع تحصیلی:</label>
+            <select name="level">
+                <option value="کارشناسی">کارشناسی</option>
+                <option value="کارشناسی ارشد">کارشناسی ارشد</option>
+                <option value="دکتری">دکتری</option>
+            </select>
+
+            <label>در آزمون سامفا شرکت کرده‌اید؟ (نمره را وارد کنید اگر شرکت کرده‌اید)</label>
+            <input type="text" name="samfa_score">
+
+            <label>توانایی شما در استفاده از واژگان دانشگاهی در نوشتن:</label>
+            <select name="writing_vocab">
+                <option>خیلی ضعیف</option>
+                <option>ضعیف</option>
+                <option>متغیر است</option>
+                <option>خیلی خوب</option>
+                <option>خیلی قوی</option>
+            </select>
+
+            <!-- همین الگو برای مهارت‌های دیگر هم می‌تونی اضافه کنی -->
+
+            <button type="submit">ثبت و ادامه</button>
+        </form>
+    </div>
+</body>
+</html>

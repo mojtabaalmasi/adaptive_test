@@ -222,7 +222,7 @@ def index():
     session['answered_questions'] = []
     session['responses'] = []
     session['theta'] = 0.0
-    return render_template('index.html')
+    return render_template('select_role.html')
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
@@ -466,3 +466,72 @@ def pretest():
         return redirect(url_for('test'))  # بعد از پرسشنامه به آزمون برود
 
     return render_template('pretest.html')
+
+
+@app.route('/select_role', methods=['GET', 'POST'])
+def select_role():
+    if request.method == 'POST':
+        role = request.form.get('role')
+        session['user_role'] = role
+        if role == 'teacher':
+            return redirect(url_for('teacher_pretest'))
+        elif role == 'learner':
+            return redirect(url_for('learner_pretest'))
+    return render_template('role_select.html')
+
+@app.route('/teacher_pretest', methods=['GET', 'POST'])
+def teacher_pretest():
+    return render_template('teacher_pretest.html')
+
+@app.route('/learner_pretest', methods=['GET', 'POST'])
+def learner_pretest():
+    return render_template('learner_pretest.html')
+
+
+@app.route('/teacher_pretest', methods=['GET', 'POST'])
+def teacher_pretest():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        teaching_years = request.form.get('teaching_years')
+        teaching_level = request.form.get('teaching_level')
+        vocab_exp = request.form.get('academic_vocab_experience')
+        comments = request.form.get('comments')
+
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO teacher_pretest (name, teaching_years, teaching_level, academic_vocab_experience, comments)
+            VALUES (?, ?, ?, ?, ?)
+        """, (name, teaching_years, teaching_level, vocab_exp, comments))
+        conn.commit()
+        conn.close()
+
+        session['user_name'] = name
+        return redirect(url_for('register'))  # رفتن به فرم ثبت‌نام یا آزمون
+
+    return render_template('teacher_pretest.html')
+
+
+@app.route('/learner_pretest', methods=['GET', 'POST'])
+def learner_pretest():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        university = request.form.get('university')
+        major = request.form.get('major')
+        level = request.form.get('level')
+        samfa_score = request.form.get('samfa_score')
+        writing_vocab = request.form.get('writing_vocab')
+
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO learner_pretest (name, university, major, level, samfa_score, writing_vocab)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (name, university, major, level, samfa_score, writing_vocab))
+        conn.commit()
+        conn.close()
+
+        session['user_name'] = name
+        return redirect(url_for('register'))
+
+    return render_template('learner_pretest.html')
