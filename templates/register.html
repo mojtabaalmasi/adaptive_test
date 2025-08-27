@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فرم ثبت‌ نام | آزمون واژگان دانشگاهی</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', 'Vazir', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.8s ease;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .header h2 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .form-container {
+            padding: 30px;
+            background: #fff;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f4f8;
+            color: #1a2980;
+        }
+        
+        .section-title i {
+            margin-left: 10px;
+            background: #e3f2fd;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        
+        .form-group {
+            flex: 1 0 calc(50% - 20px);
+            margin: 0 10px 20px;
+            min-width: 250px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+            position: relative;
+        }
+        
+        label.required::after {
+            content: "*";
+            color: #e74c3c;
+            margin-right: 5px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            background: #fff;
+        }
+        
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .role-section {
+            background: #f0f7ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .role-section h3 {
+            color: #1a2980;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .role-section h3 i {
+            margin-left: 10px;
+            color: #3498db;
+        }
+        
+        .ability-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .ability-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #e0e6ed;
+        }
+        
+        button {
+            background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(26, 41, 128, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(26, 41, 128, 0.3);
+        }
+        
+        button i {
+            margin-left: 10px;
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .form-group {
+                flex: 1 0 100%;
+            }
+            
+            .header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 15px;
+            }
+            
+            .header h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2><i class="fas fa-book-open"></i> آزمون انطباقی رایانه‌ای واژگان دانشگاهی زبان فارسی</h2>
+        <p>لطفا اطلاعات خود را با دقت وارد نمایید</p>
+    </div>
+    
+    <div class="form-container">
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-user"></i>
+                    <h3>اطلاعات شخصی</h3>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">نام و نام خانوادگی:</label>
+                        <input type="text" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required">ملیت:</label>
+                        <input type="text" name="nationality" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required">زبان مادری:</label>
+                        <input type="text" name="mother_tongue" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>زبان رسمی کشور شما:</label>
+                        <input type="text" name="official_language">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>سن:</label>
+                        <input type="number" name="age" min="5" max="100">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>رشته تحصیلی:</label>
+                        <input type="text" name="major">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required">مقطع تحصیلی شما:</label>
+                        <select name="education_level" required>
+                            <option value="">انتخاب کنید</option>
+                            <option value="دیپلم">دیپلم</option>
+                            <option value="لیسانس">لیسانس</option>
+                            <option value="فوق لیسانس">فوق لیسانس</option>
+                            <option value="دکتری">دکتری</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>شغل:</label>
+                        <input type="text" name="job">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-user-tie"></i>
+                    <h3>نقش شما در پژوهش</h3>
+                </div>
+                
+                <div class="form-group">
+                    <label class="required">نقش شما در این پژوهش چیست؟</label>
+                    <select name="role" id="role" required onchange="toggleRoleFields()">
+                        <option value="">انتخاب کنید</option>
+                        <option value="teacher">مدرس زبان فارسی</option>
+                        <option value="learner">فارسی‌آموز</option>
+                    </select>
+                </div>
+                
+                <!-- بخش مدرس -->
+                <div id="teacher_fields" class="hidden role-section">
+                    <h3><i class="fas fa-chalkboard-teacher"></i> اطلاعات تدریس</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>سابقه تدریس (برحسب سال):</label>
+                            <input type="number" name="teaching_years" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>دانشگاه یا مؤسسه‌های تدریس:</label>
+                            <input type="text" name="teaching_institutions">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>سطح تدریس:</label>
+                            <select name="teaching_level">
+                                <option value="">انتخاب کنید</option>
+                                <option value="مبتدی">مبتدی</option>
+                                <option value="متوسط">متوسط</option>
+                                <option value="پیشرفته">پیشرفته</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" style="flex: 1 0 100%">
+                            <label>نظرتان درباره لزوم و اهمیت فارسی دانشگاهی:</label>
+                            <textarea name="academic_persian_opinion" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- بخش فارسی‌آموز -->
+                <div id="learner_fields" class="hidden role-section">
+                    <h3><i class="fas fa-user-graduate"></i> اطلاعات یادگیری</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>چند سال است زبان فارسی می‌آموزید؟</label>
+                            <select name="learning_duration">
+                                <option value="">انتخاب کنید</option>
+                                <option value="کمتر از ۱">کمتر از ۱ سال</option>
+                                <option value="۱–۲">۱ تا ۲ سال</option>
+                                <option value="۳–۴">۳ تا ۴ سال</option>
+                                <option value="بیشتر از ۴">بیشتر از ۴ سال</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>سطح کنونی زبان فارسی شما چیست؟</label>
+                            <select name="current_level">
+                                <option value="">انتخاب کنید</option>
+                                <option value="مقدماتی">مقدماتی</option>
+                                <option value="میانی">میانی</option>
+                                <option value="پیشرفته">پیشرفته</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>آیا سابقه آموزش رسمی زبان فارسی داشته‌اید؟</label>
+                            <select name="formal_training">
+                                <option value="">انتخاب کنید</option>
+                                <option value="بله">بله</option>
+                                <option value="خیر">خیر</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>اگر بله، در کدام دانشگاه یا مرکز؟</label>
+                            <input type="text" name="training_institution">
+                        </div>
+
+
+                        <div class="form-group">
+                            <label>آیا در آزمون رسمی سامفا شرکت کرده اید؟</label>
+                            <select name="samfa_taken">
+                                <option value="">انتخاب کنید</option>
+                                <option value="بله">بله</option>
+                                <option value="خیر">خیر</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>اگر بله، چه نمره ای کسب کردید؟</label>
+                            <input type="text" name="samfa_score">
+                        </div>
+
+
+
+                    </div>
+                    
+                    <h3 style="margin-top: 25px;"><i class="fas fa-chart-bar"></i> ارزیابی مهارت‌ها</h3>
+                    <div class="ability-grid">
+                        <div class="ability-item">
+                            <label>توانایی نوشتاری:</label>
+                            <select name="writing_ability">
+                                <option value="">انتخاب کنید</option>
+                                <option value="خیلی ضعیف">خیلی ضعیف</option>
+                                <option value=" ضعیف"> ضعیف</option>
+                                <option value="متغیر">متغیر</option>
+                                <option value=" قوی"> قوی</option>
+                                <option value="خیلی قوی">خیلی قوی</option>
+                            </select>
+                        </div>
+                        
+                        <div class="ability-item">
+                            <label>توانایی خواندن:</label>
+                            <select name="reading_ability">
+                                <option value="">انتخاب کنید</option>
+                                <option value="خیلی ضعیف">خیلی ضعیف</option>
+                                <option value=" ضعیف"> ضعیف</option>
+                                <option value="متغیر">متغیر</option>
+                                <option value=" قوی"> قوی</option>
+                                <option value="خیلی قوی">خیلی قوی</option>
+                            </select>
+                        </div>
+                        
+                        <div class="ability-item">
+                            <label>توانایی گفتاری:</label>
+                            <select name="speaking_ability">
+                                <option value="">انتخاب کنید</option>
+                                <option value="خیلی ضعیف">خیلی ضعیف</option>
+                                <option value=" ضعیف"> ضعیف</option>
+                                <option value="متغیر">متغیر</option>
+                                <option value=" قوی"> قوی</option>
+                                <option value="خیلی قوی">خیلی قوی</option>
+                            </select>
+                        </div>
+                        
+                        <div class="ability-item">
+                            <label>توانایی شنیداری:</label>
+                            <select name="listening_ability">
+                                <option value="">انتخاب کنید</option>
+                                <option value="خیلی ضعیف">خیلی ضعیف</option>
+                                <option value=" ضعیف"> ضعیف</option>
+                                <option value="متغیر">متغیر</option>
+                                <option value=" قوی"> قوی</option>
+                                <option value="خیلی قوی">خیلی قوی</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>نظر شما درباره نیاز به فارسی دانشگاهی چیست؟</label>
+                        <textarea name="importance_of_academic_persian" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit">
+                <i class="fas fa-paper-plane"></i> ثبت و ادامه به آزمون
+            </button>
+            
+            <div class="footer-note">
+                <p>اطلاعات شما نزد ما محفوظ است و صرفاً برای اهداف پژوهشی استفاده خواهد شد</p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleRoleFields() {
+        var role = document.getElementById("role").value;
+        document.getElementById("teacher_fields").classList.add("hidden");
+        document.getElementById("learner_fields").classList.add("hidden");
+        if (role === "teacher") {
+            document.getElementById("teacher_fields").classList.remove("hidden");
+        } else if (role === "learner") {
+            document.getElementById("learner_fields").classList.remove("hidden");
+        }
+    }
+    
+    // Initialize form based on any pre-selected role
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleRoleFields();
+    });
+</script>
+</body>
+</html>
