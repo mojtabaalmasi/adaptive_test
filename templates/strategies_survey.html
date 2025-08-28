@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>پس‌آزمون – پرسشنامهٔ راهبردهای آزمون</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn-font@latest/dist/font-face.css" rel="stylesheet" type="text/css" />
+  <style>
+    :root{ --bg:#f5f6fa; --card:#fff; --text:#222; --muted:#666; --brand:#0d6efd; --danger:#dc3545; --shadow:0 6px 16px rgba(0,0,0,.08); --radius:14px; }
+    *{box-sizing:border-box}
+    body{font-family:Vazirmatn, Tahoma, sans-serif; background:var(--bg); color:var(--text); margin:0}
+    .container{max-width:1000px; margin:28px auto; padding:0 16px}
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+    h1{font-size:20px; color:#004080; margin:0 0 8px; text-align:right}
+    p.lead{color:var(--muted); margin:0 0 16px}
+    .group-title{margin:18px 0 8px; font-weight:700; color:#1b47b3}
+    table{width:100%; border-collapse:collapse; background:#fff}
+    th, td{border:1px solid #eee; padding:10px; text-align:center; font-size:14px}
+    th.qcol, td.qcol{text-align:right; width:50%}
+    th.scale{width:10%}
+    .req{color:var(--danger); font-size:12px; margin-right:6px}
+    .err{color:var(--danger); font-size:12px; margin-top:6px}
+    .actions{display:flex; justify-content:flex-end; margin-top:16px}
+    .btn{background:var(--brand); color:#fff; text-decoration:none; border:0; border-radius:10px; padding:10px 14px; cursor:pointer}
+    .note{color:var(--muted); font-size:13px; margin-top:10px}
+    @media (max-width: 760px){
+      th.scale{font-size:12px; padding:8px}
+      th.qcol, td.qcol{padding:8px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>پس‌آزمون: پرسشنامهٔ راهبردهای آزمون</h1>
+      <p class="lead">لطفاً هر عبارت را بر اساس تجربهٔ همین آزمون، از «کاملاً مخالفم» تا «کاملاً موافقم» امتیاز دهید.</p>
+
+      <form method="post" action="{{ url_for('post_test') }}">
+        {% for g in groups %}
+          <div class="group-title">{{ g['category'] if g['category'] else 'سایر' }}</div>
+          <table>
+            <thead>
+              <tr>
+                <th class="qcol">عبارت</th>
+                <th class="scale">کاملاً مخالفم<br>۱</th>
+                <th class="scale">مخالفم<br>۲</th>
+                <th class="scale">نظری ندارم<br>۳</th>
+                <th class="scale">موافقم<br>۴</th>
+                <th class="scale">کاملاً موافقم<br>۵</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in g['items'] %}
+                {% set name = 's_' ~ item.id %}
+                <tr>
+                  <td class="qcol">
+                    {{ item.text }}
+                    <span class="req">(الزامی)</span>
+                    {% if errors.get(item.id) %}
+                      <div class="err">* مقدار این مورد {{ errors[item.id] }} است</div>
+                    {% endif %}
+                  </td>
+                  {% for v in [1,2,3,4,5] %}
+                    <td>
+                      <input type="radio"
+                             name="{{ name }}"
+                             value="{{ v }}"
+                             {% if values.get(name) and values.get(name)==v|string %}checked{% endif %}>
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endfor %}
+
+        <div class="actions">
+          <button type="submit" class="btn">ثبت پرسشنامه</button>
+        </div>
+        <div class="note">راهنما: ۱ = کاملاً مخالفم … ۵ = کاملاً موافقم</div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

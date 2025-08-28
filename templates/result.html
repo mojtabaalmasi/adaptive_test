@@ -1,106 +1,88 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>نتایج آزمون انطباقی</title>
-    <style>
-        body {
-            font-family: "Tahoma", sans-serif;
-            direction: rtl;
-            background-color: #f7f9fc;
-            margin: 0;
-            padding: 30px 10px;
-            color: #333;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 700px;
-            width: 100%;
-            background: white;
-            padding: 25px 30px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            text-align: center;
-        }
-        h1 {
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-        .theta-value {
-            font-size: 1.5rem;
-            margin-bottom: 25px;
-            color: #27ae60;
-        }
-        .images {
-            display: flex;
-            justify-content: space-around;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
-        }
-        .images img {
-            max-width: 320px;
-            width: 100%;
-            border-radius: 6px;
-            box-shadow: 0 0 8px rgba(0,0,0,0.1);
-        }
-        .download-links a {
-            display: inline-block;
-            background-color: #2980b9;
-            color: white;
-            padding: 12px 25px;
-            margin: 0 10px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .download-links a:hover {
-            background-color: #1c5980;
-        }
-        .note {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 15px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>نتایج آزمون</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn-font@latest/dist/font-face.css" rel="stylesheet" type="text/css" />
+  <style>
+    :root{
+      --bg:#f5f6fa; --card:#fff; --text:#222; --muted:#666;
+      --ok:#28a745; --brand:#0d6efd; --shadow:0 6px 16px rgba(0,0,0,.08); --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Vazirmatn, Tahoma, sans-serif; background:var(--bg); color:var(--text); margin:0}
+    .container{max-width:1000px; margin:28px auto; padding:0 16px}
+    .header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+    .title{font-size:20px; color:#004080; margin:0}
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media (max-width: 800px){ .grid{grid-template-columns:1fr} }
+    .stat{display:flex; gap:12px; align-items:center; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:10px 12px}
+    .stat .k{color:var(--muted); font-size:13px}
+    .stat .v{font-weight:700}
+    .band{display:inline-block; padding:4px 10px; border-radius:999px; background:#eef3ff; color:#1b47b3; font-size:13px}
+    .progress-bar{height:10px; background:#e9ecef; border-radius:999px; overflow:hidden}
+    .progress-fill{height:100%; background:var(--ok); width:0%}
+    .img-wrap{background:#fafafa; border:1px solid #eee; border-radius:10px; padding:8px; text-align:center}
+    .img-wrap img{max-width:100%; height:auto; border-radius:8px}
+    .hint{color:var(--muted); font-size:13px}
+    .section-title{margin:0 0 10px; font-size:16px}
+    .btn{display:inline-block; background:var(--brand); color:#fff; text-decoration:none; padding:10px 14px; border-radius:10px}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>نتایج آزمون انطباقی</h1>
-       
-		<p>نام آزمون‌دهنده: {{ user_name }}</p>
-		<p>توانایی تخمینی (θ): {{ theta }}</p>
-		<div class="theta-value">مقدار تخمینی θ (توانایی): {{ theta | round(3) }}</div>
-
-        <div class="images">
-            <div>
-                <h3>نمودار تابع مشخصه سوالات (ICC)</h3>
-                <img src="{{ icc_image }}" alt="ICC Chart" />
-            </div>
-            <div>
-                <h3>نمودار تابع اطلاعات آزمون</h3>
-                <img src="{{ info_image }}" alt="Test Information Chart" />
-            </div>
-        </div>
-		
-		
-		<h2>نتیجه آزمون برای: {{ user_name }}</h2>
-		<p>امتیاز توانایی (θ): {{ theta }}</p>
-		<p>تفسیر: {{ interpretation }}</p>
-		<img src="{{ url_for('static', filename=icc_image.split('static/')[1]) }}" alt="ICC Plot" />
-		<img src="{{ url_for('static', filename=info_image.split('static/')[1]) }}" alt="Information Plot" />
-
-        <div class="download-links">
-            <a href="{{ url_for('download', filetype='excel') }}">دانلود فایل اکسل</a>
-            <a href="{{ url_for('download', filetype='word') }}">دانلود فایل ورد</a>
-        </div>
-
-        <div class="note">
-            توجه: برای مشاهده بهتر نمودارها، فایل‌ها را دانلود و باز کنید.
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">نتیجهٔ آزمون تطبیقی</h1>
+      <div class="hint">کاربر: {{ user_name }}</div>
     </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2 class="section-title">خلاصهٔ عددی</h2>
+
+        <div class="stat"><span class="k">امتیاز توانایی (θ):</span> <span class="v">{{ "%.3f"|format(theta) }}</span> <span class="band">{{ band }}</span></div>
+        {% if se is not none %}
+        <div class="stat"><span class="k">خطای استاندارد (SE):</span> <span class="v">{{ "%.3f"|format(se) }}</span></div>
+        <div class="stat"><span class="k">بازهٔ ۶۸٪:</span> <span class="v">{{ "%.2f"|format(ci68[0]) }} تا {{ "%.2f"|format(ci68[1]) }}</span></div>
+        <div class="stat"><span class="k">بازهٔ ۹۵٪:</span> <span class="v">{{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}</span></div>
+        {% endif %}
+        <div class="stat"><span class="k">تعداد سؤالات پاسخ‌داده‌شده:</span> <span class="v">{{ n_total }}</span></div>
+        <div class="stat"><span class="k">پاسخ‌های درست:</span> <span class="v">{{ n_correct }}</span></div>
+        <div class="stat"><span class="k">پاسخ‌های نادرست:</span> <span class="v">{{ n_wrong }}</span></div>
+        <div class="stat"><span class="k">دقت کل:</span> <span class="v">{{ "%.1f"|format(accuracy) }}٪</span></div>
+
+        <div style="margin-top:14px">
+          <div class="progress-bar"><div class="progress-fill" style="width: {{ accuracy }}%"></div></div>
+          <div class="hint" style="margin-top:6px">نسبت پاسخ‌های درست از کل پاسخ‌ها</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">تفسیر</h2>
+        <p style="margin-top:0">{{ interpretation }}</p>
+        <p class="hint">توجه: θ برآوردی است و با افزایش تعداد آیتم‌ها، SE کاهش می‌یابد و بازهٔ اطمینان فشرده‌تر می‌شود.</p>
+        <div style="margin-top:12px">
+          <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ راهبردهای آزمون</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:16px">
+      {% if icc_image %}
+      <div class="card img-wrap">
+        <div class="section-title">منحنی‌های ICC آیتم‌های پاسخ‌داده‌شده</div>
+        <img src="{{ url_for('static', filename=icc_image.split('static/')[1]) if 'static/' in icc_image else icc_image }}" alt="ICC">
+      </div>
+      {% endif %}
+      {% if info_image %}
+      <div class="card img-wrap">
+        <div class="section-title">تابع اطلاعات کل آزمون</div>
+        <img src="{{ url_for('static', filename=info_image.split('static/')[1]) if 'static/' in info_image else info_image }}" alt="Info">
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </body>
 </html>

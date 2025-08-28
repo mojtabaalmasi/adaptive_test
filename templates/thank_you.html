@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>سپاس از شما</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn-font@latest/dist/font-face.css" rel="stylesheet" type="text/css" />
+  <style>
+    :root{ --bg:#f5f6fa; --card:#fff; --text:#222; --muted:#666; --brand:#0d6efd; --shadow:0 6px 16px rgba(0,0,0,.08); --radius:14px; }
+    *{box-sizing:border-box}
+    body{font-family:Vazirmatn, Tahoma, sans-serif;background:var(--bg);color:var(--text);margin:0}
+    .container{max-width:800px;margin:40px auto;padding:0 16px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;text-align:center}
+    h1{font-size:22px;color:#004080;margin:0 0 10px}
+    p{margin:0 0 10px;line-height:1.9}
+    .muted{color:var(--muted);font-size:14px}
+    .actions{margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .btn{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;border:0;border-radius:10px;padding:10px 16px;cursor:pointer}
+    .btn-outline{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>سپاس از همراهی شما، {{ user_name }} 🌟</h1>
+      <p>پاسخ‌های شما در «پرسشنامهٔ راهبردهای آزمون» با موفقیت ثبت شد.</p>
+      <p class="muted">همین‌جا آزمون به پایان می‌رسد. می‌توانید این صفحه را ببندید یا به صفحهٔ آغاز بازگردید.</p>
+      <div class="actions">
+        <a class="btn" href="{{ url_for('index') }}">بازگشت به آغاز</a>
+        <a class="btn btn-outline" href="{{ url_for('result') }}">مشاهدهٔ نتایج آزمون</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -171,6 +171,17 @@
         </div>
       </form>
 
+
+      <script>
+  (function(){
+    const t0 = performance.now();
+    document.getElementById('qform').addEventListener('submit', function(){
+      const ms = Math.round(performance.now() - t0);
+      document.getElementById('rt_ms').value = String(ms);
+    });
+  })();
+</script>
+
       <div class="progress">
         پیشرفت آزمون: {{ progress }}٪
         <div class="progress-bar">
