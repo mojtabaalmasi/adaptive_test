@@ -1,4 +1,5 @@
-from flask import Flask,flash, render_template, request, redirect, session, send_file, url_for
+# app.py
+from flask import Flask, flash, render_template, request, redirect, session, send_file, url_for
 import sqlite3
 import numpy as np
 import pandas as pd
@@ -6,158 +7,255 @@ from docx import Document
 import matplotlib.pyplot as plt
 import os
 import uuid
+from werkzeug.utils import secure_filename
 
-
+# ----------------------------- پیکربندی پایه -----------------------------
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
 
 DATABASE = 'questions.db'
+
 def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE, timeout=30)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA busy_timeout=30000;")
     return conn
 
+# آپلود ویس
+UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'voices')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024  # 15MB
+
+MIME_EXT = {
+    'audio/webm': 'webm',
+    'video/webm': 'webm',
+    'audio/ogg':  'ogg',
+    'audio/mp4':  'm4a',   # Safari iOS
+    'audio/mpeg': 'mp3',
+    'audio/3gpp': '3gp',
+    'audio/wav':  'wav'
+}
+ALLOWED_MIME = set(MIME_EXT.keys())
+
+# فلگ سازگاری: آیا جدول answers ستونی به نام response دارد؟
+_ANSWERS_HAS_RESPONSE_COL = None
+
+def answers_has_response_column():
+    global _ANSWERS_HAS_RESPONSE_COL
+    if _ANSWERS_HAS_RESPONSE_COL is not None:
+        return _ANSWERS_HAS_RESPONSE_COL
+    with get_db_connection() as conn:
+        cols = conn.execute("PRAGMA table_info(answers)").fetchall()
+        names = {c['name'] for c in cols}
+        _ANSWERS_HAS_RESPONSE_COL = ('response' in names)
+    return _ANSWERS_HAS_RESPONSE_COL
+
+# ----------------------------- شِمای جداول (ایجاد در صورت نبود) -----------------------------
 def init_db():
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS participants (
-                participant_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT,
-                nationality TEXT,
-                native_language TEXT,
-                official_language TEXT,
-                age INTEGER,
-                field_of_study TEXT,
-                education_level TEXT,
-                job TEXT,
-                role TEXT
-            )
-        ''')
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS teacher_info (
-                participant_id INTEGER,
-                teaching_years INTEGER,
-                teaching_institutions TEXT,
-                teaching_level TEXT,
-                teacher_comment TEXT,
-                FOREIGN KEY(participant_id) REFERENCES participants(participant_id)
-            )
-        ''')
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS learner_info (
-                participant_id INTEGER,
-                learning_institution TEXT,
-                learning_duration TEXT,
-                current_level TEXT,
-                formal_training TEXT,
-                training_center TEXT,
-                
-                FOREIGN KEY(participant_id) REFERENCES participants(participant_id)
-            )
-        ''')
+    with sqlite3.connect(DATABASE, timeout=30) as conn:
+        cur = conn.cursor()
+        cur.executescript("""
+        PRAGMA foreign_keys = ON;
 
+        CREATE TABLE IF NOT EXISTS participants (
+            participant_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            name             TEXT,
+            nationality      TEXT,
+            mother_tongue    TEXT,
+            official_language TEXT,
+            age              INTEGER,
+            major            TEXT,
+            education_level  TEXT,
+            job              TEXT,
+            role             TEXT
+        );
 
-def get_question_by_id(question_id):
+        CREATE TABLE IF NOT EXISTS teacher_info (
+            participant_id               INTEGER UNIQUE,
+            teaching_years               INTEGER,
+            teaching_institutions        TEXT,
+            teaching_level               TEXT,
+            importance_of_academic_persian TEXT,
+            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS learner_info (
+            participant_id         INTEGER UNIQUE,
+            learning_duration      TEXT,
+            current_level          TEXT,
+            formal_training        TEXT,
+            training_institution   TEXT,
+            samfa_taken            TEXT,
+            samfa_score            REAL,
+            importance_of_academic_persian TEXT,
+            speaking_ability       TEXT,
+            reading_ability        TEXT,
+            writing_ability        TEXT,
+            listening_ability      TEXT,
+            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            text TEXT NOT NULL,
+            option1 TEXT, option2 TEXT, option3 TEXT, option4 TEXT,
+            correct_option INTEGER,
+            a REAL NOT NULL, b REAL NOT NULL, c REAL NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS answers (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id         INTEGER NOT NULL,
+            question_id     INTEGER NOT NULL,
+            -- ستون legacy (در برخی DBهای شما ممکن است وجود داشته باشد)
+            -- response INTEGER,
+            selected_option INTEGER,
+            is_correct      INTEGER,
+            created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id)     REFERENCES participants(participant_id) ON DELETE CASCADE,
+            FOREIGN KEY(question_id) REFERENCES questions(id)                ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS user_results (
+            user_id INTEGER PRIMARY KEY,
+            theta   REAL,
+            FOREIGN KEY(user_id) REFERENCES participants(participant_id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS manager_questions (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            text          TEXT NOT NULL,
+            display_order INTEGER NOT NULL DEFAULT 0,
+            is_required   INTEGER NOT NULL DEFAULT 1 CHECK (is_required IN (0,1)),
+            is_active     INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0,1)),
+            created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS voice_answers (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            participant_id INTEGER NOT NULL,
+            role           TEXT NOT NULL DEFAULT 'manager',
+            question_id    INTEGER NOT NULL,
+            file_path      TEXT NOT NULL,
+            mime_type      TEXT,
+            duration_ms    INTEGER,
+            size_bytes     INTEGER,
+            created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE,
+            FOREIGN KEY(question_id)   REFERENCES manager_questions(id)        ON DELETE CASCADE
+        );
+
+        """)
+        # ایندکس‌های موردنیاز برای UPSERT
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_user_results_user ON user_results(user_id);")
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_voice_answers_user_q ON voice_answers(participant_id, question_id);")
+        conn.commit()
+
+# ----------------------------- لایهٔ سؤال/پارامترها -----------------------------
+def get_question_by_id(question_id: int):
     conn = get_db_connection()
-    question = conn.execute("SELECT id, text, option1, option2, option3, option4 FROM questions WHERE id = ?", (question_id,)).fetchone()
+    row = conn.execute("SELECT id, text, option1, option2, option3, option4 FROM questions WHERE id = ?", (question_id,)).fetchone()
     conn.close()
-    if question:
+    if row:
         return {
-            'id': int(question['id']),
-            'text': question['text'],
-            'options': [question['option1'], question['option2'], question['option3'], question['option4']]
+            'id': int(row['id']),
+            'text': row['text'],
+            'options': [row['option1'], row['option2'], row['option3'], row['option4']]
         }
     return None
 
 def get_all_item_params():
     conn = get_db_connection()
-    rows = conn.execute("SELECT a, b, c FROM questions ORDER BY id").fetchall()
+    rows = conn.execute("SELECT id, a, b, c FROM questions ORDER BY id").fetchall()
     conn.close()
-    #return [(int(row['id']), float(row['a']), float(row['b']), float(row['c'])) for row in rows]
-    return [(float(row['a']), float(row['b']), float(row['c'])) for row in rows]
+    return [(int(r['id']), float(r['a']), float(r['b']), float(r['c'])) for r in rows]
 
-# ------------------ توابع IRT ------------------
+def get_correct_answer(question_id: int):
+    with get_db_connection() as db:
+        row = db.execute("SELECT correct_option FROM questions WHERE id = ?", (question_id,)).fetchone()
+    return int(row['correct_option']) if (row and row['correct_option'] is not None) else None
+
+# ----------------------------- IRT (3PL پایدار) -----------------------------
+EPS = 1e-9
+THETA_MIN, THETA_MAX = -4.0, 4.0
+
+def _sigmoid(x):
+    x = np.clip(x, -50.0, 50.0)
+    return 1.0 / (1.0 + np.exp(-x))
 
 def three_pl_probability(theta, a, b, c):
-    return c + (1 - c) / (1 + np.exp(-a * (theta - b)))
-
-def estimate_theta_mle(responses, item_params, lr=0.005, max_iter=500, tol=1e-5):
-    theta = 0.0
-    for _ in range(max_iter):
-        grad = 0.0
-        for i, (a, b, c) in enumerate(item_params):
-            p = three_pl_probability(theta, a, b, c)
-            q = 1 - p
-            # اصلاح گرادیان ساده‌تر و ایمن‌تر
-            numerator = (responses[i] - p) * a * (1 - c)
-            denominator = p * q + 1e-9
-            dL = numerator / denominator
-            grad += dL
-        theta_new = theta + lr * grad
-        # محدود کردن θ در دامنه [-4, 4]
-        theta_new = max(min(theta_new, 4), -4)
-        if abs(theta_new - theta) < tol:
-            break
-        theta = theta_new
-    return float(theta)
-
-
-
-def estimate_theta_map(responses, item_params, lr=0.01, max_iter=500, tol=1e-5):
-    theta = 0.0
-    prior_mean = 0.0
-    prior_var = 1.0  # واریانس prior، می‌توانید مقدارش را تغییر دهید
-    for _ in range(max_iter):
-        grad = 0.0
-        for i, (a, b, c) in enumerate(item_params):
-            p = three_pl_probability(theta, a, b, c)
-            q = 1 - p
-            dL = a * (responses[i] - p) * (1 - c) / (p * q + 1e-9)
-            grad += dL
-        # گرادیان prior (نرمال با میانگین صفر و واریانس prior_var)
-        grad_prior = -(theta - prior_mean) / prior_var
-        grad_total = grad + grad_prior
-        theta_new = theta + lr * grad_total
-        if abs(theta_new - theta) < tol:
-            break
-        theta = theta_new
-    return float(theta)
-
+    a = max(float(a), EPS)
+    c = float(np.clip(c, 0.0, 0.999))
+    p = c + (1.0 - c) * _sigmoid(a * (theta - b))
+    return float(np.clip(p, c + EPS, 1.0 - EPS))
 
 def item_information(theta, a, b, c):
     p = three_pl_probability(theta, a, b, c)
-    q = 1 - p
-    denominator = ((1 - c) ** 2 * p * q) + 1e-9
-    if p <= 0 or p >= 1 or np.isnan(p) or np.isnan(q) or denominator <= 1e-9:
-        return -np.inf  # اطلاعات بی‌ارزش یا محاسبه‌ناپذیر
-    info = (a ** 2) * ((p - c) ** 2) / denominator
-    return info if not np.isnan(info) and info > 1e-6 else -np.inf
+    q = 1.0 - p
+    info = (a ** 2) * ((p - c) ** 2) / ((1.0 - c) ** 2 + EPS) * (q / p)
+    return float(info) if np.isfinite(info) and info > 0 else 0.0
 
+def test_information(theta, item_params):
+    return float(sum(item_information(theta, a, b, c) for (a, b, c) in item_params))
+
+def _grad_loglik_theta(theta, responses, item_params):
+    g = 0.0
+    for x, (a, b, c) in zip(responses, item_params):
+        p = three_pl_probability(theta, a, b, c)
+        g += a * (x - p) * (p - c) / ((1.0 - c) * p + EPS)
+    return float(g)
+
+def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=50, tol=1e-4):
+    theta = 0.0
+    for _ in range(max_iter):
+        g = _grad_loglik_theta(theta, responses, item_params)
+        I = test_information(theta, item_params) + EPS
+        step = g / I
+        if not np.isfinite(step) or abs(step) > 1.0:
+            step = 0.25 * np.tanh(step)
+        theta_new = float(np.clip(theta + step, THETA_MIN, THETA_MAX))
+        if abs(theta_new - theta) < tol:
+            return theta_new
+        theta = theta_new
+    return theta
+
+def estimate_theta_map(responses, item_params, theta0=0.0, prior_mean=0.0, prior_var=1.0, max_iter=50, tol=1e-4):
+    theta = float(np.clip(theta0, THETA_MIN, THETA_MAX))
+    inv_var = 1.0 / max(prior_var, EPS)
+    for _ in range(max_iter):
+        g_like = _grad_loglik_theta(theta, responses, item_params)
+        g_prior = -(theta - prior_mean) * inv_var
+        g = g_like + g_prior
+        I = test_information(theta, item_params) + inv_var + EPS
+        step = g / I
+        if not np.isfinite(step) or abs(step) > 1.0:
+            step = 0.25 * np.tanh(step)
+        theta_new = float(np.clip(theta + step, THETA_MIN, THETA_MAX))
+        if abs(theta_new - theta) < tol:
+            return theta_new
+        theta = theta_new
+    return theta
+
+def theta_se(theta, item_params):
+    I = test_information(theta, item_params)
+    return float(1.0 / np.sqrt(max(I, EPS)))
 
 def select_next_question(theta, all_item_params, answered_indices):
-    infos = []
+    best_idx, best_info = None, -1.0
     for i, (a, b, c) in enumerate(all_item_params):
         if i in answered_indices:
-            infos.append(-np.inf)
-        else:
-            info = item_information(theta, a, b, c)
-            infos.append(info)
+            continue
+        info = item_information(theta, a, b, c)
+        if info > best_info:
+            best_info, best_idx = info, i
+    return best_idx
 
-    print("اطلاعات سوالات:", infos)
-
-    if all(info == -np.inf for info in infos):
-        print("❌ هیچ سوال قابل انتخابی وجود ندارد.")
-        return None
-
-    next_q = int(np.argmax(infos))
-    return next_q
-
-
-# ------------------ نمودار ------------------
-
+# ----------------------------- نمودار -----------------------------
 def plot_icc(item_params, save_path):
-    theta_range = np.linspace(-4, 4, 100)
+    theta_range = np.linspace(THETA_MIN, THETA_MAX, 200)
     plt.figure(figsize=(10, 6))
     for i, (a, b, c) in enumerate(item_params):
         probs = [three_pl_probability(t, a, b, c) for t in theta_range]
@@ -173,13 +271,13 @@ def plot_icc(item_params, save_path):
     return save_path
 
 def plot_item_information(item_params, save_path):
-    theta_range = np.linspace(-4, 4, 100)
-    total_info = np.zeros_like(theta_range)
+    theta_range = np.linspace(THETA_MIN, THETA_MAX, 200)
+    total_info = np.zeros_like(theta_range, dtype=float)
     for a, b, c in item_params:
-        info = [item_information(t, a, b, c) for t in theta_range]
+        info = np.array([item_information(t, a, b, c) for t in theta_range], dtype=float)
         total_info += info
     plt.figure(figsize=(8, 5))
-    plt.plot(theta_range, total_info, color='darkblue')
+    plt.plot(theta_range, total_info)
     plt.xlabel('θ (توانایی)')
     plt.ylabel('اطلاعات آزمون')
     plt.title('تابع اطلاعات کل آزمون')
@@ -189,8 +287,7 @@ def plot_item_information(item_params, save_path):
     plt.close()
     return save_path
 
-# ------------------ ذخیره نتایج ------------------
-
+# ----------------------------- خروجی به Excel/Word -----------------------------
 def save_results_to_excel(filepath, responses, answered_indices, theta):
     conn = get_db_connection()
     rows = conn.execute("SELECT text, a, b, c FROM questions ORDER BY id").fetchall()
@@ -198,13 +295,7 @@ def save_results_to_excel(filepath, responses, answered_indices, theta):
     data = []
     for i, r in zip(answered_indices, responses):
         row = rows[i]
-        data.append({
-            'سوال': row['text'],
-            'پاسخ': r,
-            'a': row['a'],
-            'b': row['b'],
-            'c': row['c']
-        })
+        data.append({'سوال': row['text'], 'پاسخ (0/1)': r, 'a': row['a'], 'b': row['b'], 'c': row['c']})
     df = pd.DataFrame(data)
     df.loc[len(df)] = ['θ (توانایی)', theta, '', '', '']
     df.to_excel(filepath, index=False)
@@ -214,12 +305,12 @@ def save_results_to_word(filepath, responses, answered_indices, theta):
     rows = conn.execute("SELECT text, a, b, c FROM questions ORDER BY id").fetchall()
     conn.close()
     doc = Document()
-    doc.add_heading('نتایج آزمون تطبیقی', 0)
+    doc.add_heading('نتایج آزمون تطبیقی (3PL)', 0)
     doc.add_paragraph(f'مقدار تخمینی θ: {theta:.3f}')
     table = doc.add_table(rows=1, cols=5)
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'سوال'
-    hdr_cells[1].text = 'پاسخ'
+    hdr_cells[1].text = 'پاسخ (0/1)'
     hdr_cells[2].text = 'a'
     hdr_cells[3].text = 'b'
     hdr_cells[4].text = 'c'
@@ -233,222 +324,303 @@ def save_results_to_word(filepath, responses, answered_indices, theta):
         cells[4].text = str(row['c'])
     doc.save(filepath)
 
-def get_correct_answer(question_id):
-    db = get_db_connection()
-    cursor = db.cursor()
-    cursor.execute("SELECT correct_option FROM questions WHERE id = ?", (question_id,))
-    result = cursor.fetchone()
-    return result['correct_option'] if result else None
-
+# ----------------------------- مسیرهای وب -----------------------------
 @app.route('/')
 def index():
     session.clear()
     session['answered_questions'] = []
     session['responses'] = []
     session['theta'] = 0.0
-    
     return redirect(url_for('register'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         try:
-            # اطلاعات عمومی همه شرکت‌کنندگان
-            name = request.form.get('name')
-            nationality = request.form.get('nationality')
-            mother_tongue = request.form.get('mother_tongue')
-            official_language = request.form.get('official_language')
-            age = request.form.get('age')
-            major = request.form.get('major')
-            education_level = request.form.get('education_level')
-            job = request.form.get('job')
-            role = request.form.get('role')
+            with sqlite3.connect(DATABASE, timeout=30) as conn:
+                conn.execute("PRAGMA busy_timeout=30000;")
+                cur = conn.cursor()
 
-            conn = sqlite3.connect(DATABASE)
-            cursor = conn.cursor()
+                name = request.form.get('name')
+                nationality = request.form.get('nationality')
+                mother_tongue = request.form.get('mother_tongue')
+                official_language = request.form.get('official_language')
+                age = request.form.get('age')
+                major = request.form.get('major')
+                education_level = request.form.get('education_level')
+                job = request.form.get('job')
+                role = request.form.get('role')
 
-            # درج در جدول participants
-            cursor.execute("""
-                INSERT INTO participants 
-                (name, nationality, mother_tongue, official_language, age, major, education_level, job, role)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (name, nationality, mother_tongue, official_language, age, major, education_level, job, role))
+                cur.execute("""
+                    INSERT INTO participants
+                    (name, nationality, mother_tongue, official_language, age, major, education_level, job, role)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (name, nationality, mother_tongue, official_language, age, major, education_level, job, role))
+                participant_id = cur.lastrowid
 
-            participant_id = cursor.lastrowid  # دریافت id برای درج در جدول‌های مرتبط
+                if role == 'teacher':
+                    teaching_years = request.form.get('teaching_years')
+                    teaching_institutions = request.form.get('teaching_institutions')
+                    teaching_level = request.form.get('teaching_level')
+                    academic_persian_opinion = request.form.get('academic_persian_opinion')
+                    cur.execute("""
+                        INSERT INTO teacher_info
+                        (participant_id, teaching_years, teaching_institutions, teaching_level, importance_of_academic_persian)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (participant_id, teaching_years, teaching_institutions, teaching_level, academic_persian_opinion))
 
-            if role == 'teacher':
-                teaching_experience = request.form.get('teaching_years')
-                institutions = request.form.get('teaching_institutions')
-                teaching_level = request.form.get('teaching_level')
-                academic_persian_opinion = request.form.get('academic_persian_opinion')
+                elif role == 'learner':
+                    learning_duration = request.form.get('learning_duration')
+                    current_level = request.form.get('current_level')
+                    formal_training = request.form.get('formal_training')
+                    training_institution = request.form.get('training_institution')
+                    samfa_taken = request.form.get('samfa_taken')
+                    samfa_score = request.form.get('samfa_score')
+                    writing_ability = request.form.get('writing_ability')
+                    reading_ability = request.form.get('reading_ability')
+                    speaking_ability = request.form.get('speaking_ability')
+                    listening_ability = request.form.get('listening_ability')
+                    importance_of_academic_persian = request.form.get('importance_of_academic_persian')
+                    cur.execute("""
+                        INSERT INTO learner_info
+                        (participant_id, learning_duration, current_level, formal_training,
+                         training_institution, samfa_taken, samfa_score, importance_of_academic_persian,
+                         speaking_ability, reading_ability, writing_ability, listening_ability)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (participant_id, learning_duration, current_level, formal_training,
+                          training_institution, samfa_taken, samfa_score, importance_of_academic_persian,
+                          speaking_ability, reading_ability, writing_ability, listening_ability))
 
-                cursor.execute("""
-                    INSERT INTO teacher_info 
-                    (participant_id, teaching_experience, institutions, teaching_level, importance_of_academic_persian)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (participant_id, teaching_experience, institutions, teaching_level, academic_persian_opinion))
-
-            elif role == 'learner':
-                learning_duration = request.form.get('learning_duration')
-                current_persian_level = request.form.get('current_level')
-                formal_training = request.form.get('formal_training')
-                training_institution = request.form.get('training_institution')
-                samfa_taken = request.form.get('samfa_taken')
-                samfa_score = request.form.get('samfa_score')
-                writing_ability = request.form.get('writing_ability')
-                reading_ability = request.form.get('reading_ability')
-                speaking_ability = request.form.get('speaking_ability')
-                listening_ability = request.form.get('listening_ability')
-                importance_of_academic_persian = request.form.get('importance_of_academic_persian')
-
-                cursor.execute("""
-                INSERT INTO learner_info 
-                (participant_id, learning_duration, current_persian_level, formal_training, 
-                training_institution, samfa_taken, samfa_score, importance_of_academic_persian,
-                speaking_ability,reading_ability ,writing_ability,listening_ability)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ? ,? ,? ,? ,?) 
-            """, (participant_id, learning_duration, current_persian_level, formal_training,
-                training_institution, samfa_taken, samfa_score, importance_of_academic_persian, speaking_ability, 
-                reading_ability, writing_ability, listening_ability))
-
-            flash('موفق شدم!!!!!!!!!!!!!!', 'ok')
-            conn.commit()
-            conn.close()
+                conn.commit()
 
             session['participant_id'] = participant_id
             session['user_name'] = name
-            # می‌توان به صفحه شروع آزمون هدایت کرد یا پیام موفقیت داد
-            return redirect(url_for('test'))  # فرض بر این است که چنین روتی دارید
+            session['role'] = role
+            return redirect(url_for('manager_survey' if role == 'manager' else 'test'))
 
         except sqlite3.Error as e:
-            # در صورت خطای پایگاه داده، آن را چاپ کنید
-            print("خطای پایگاه داده:", e)
-            flash('موفق شدم!!!!!!!!!!!!!!', 'ok')
-
-            conn.rollback()  # در صورت خطا، تغییرات را برگردانید
+            print("DB Error:", e)
             return f"خطای پایگاه داده: {e}", 500
-
         except Exception as e:
-            print("خطای عمومی:", e)
-
+            print("Error:", e)
             return f"خطا: {e}", 500
     return render_template('register.html')
 
+@app.route('/manager_survey')
+def manager_survey():
+    if 'participant_id' not in session:
+        return redirect(url_for('index'))
+    if session.get('role') != 'manager':
+        return redirect(url_for('test'))
 
+    conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT id, text
+        FROM manager_questions
+        WHERE is_active = 1
+        ORDER BY display_order, id
+    """).fetchall()
+    conn.close()
+
+    questions = [{'id': int(r['id']), 'text': r['text']} for r in rows]
+    return render_template('manager_survey.html', questions=questions, user_name=session.get('user_name', ''))
+
+@app.route('/api/voice_answer', methods=['POST'])
+def api_voice_answer():
+    if 'participant_id' not in session:
+        return {'ok': False, 'error': 'unauthorized'}, 401
+
+    participant_id = int(session['participant_id'])
+    role = session.get('role', 'manager')
+    question_id = request.form.get('question_id')
+    duration_ms = request.form.get('duration_ms')
+    f = request.files.get('audio')
+
+    if not question_id or not f:
+        return {'ok': False, 'error': 'missing fields'}, 400
+
+    mime = f.mimetype or 'audio/webm'
+    if mime not in ALLOWED_MIME:
+        return {'ok': False, 'error': f'unsupported mime {mime}'}, 400
+
+    ext = MIME_EXT.get(mime, 'webm')
+    filename = secure_filename(f"{participant_id}_{question_id}_{uuid.uuid4().hex}.{ext}")
+    save_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(participant_id))
+    os.makedirs(save_dir, exist_ok=True)
+    path = os.path.join(save_dir, filename)
+    f.save(path)
+
+    try:
+        size_bytes = os.path.getsize(path)
+    except Exception:
+        size_bytes = None
+
+    rel_path = os.path.relpath(path, start=os.path.join(app.root_path, 'static')).replace('\\', '/')
+
+    with sqlite3.connect(DATABASE, timeout=30) as conn:
+        conn.execute("PRAGMA busy_timeout=30000;")
+        cur = conn.cursor()
+        # UPSERT (نیازمند UNIQUE(participant_id, question_id))
+        try:
+            cur.execute("""
+                INSERT INTO voice_answers (participant_id, role, question_id, file_path, mime_type, duration_ms, size_bytes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(participant_id, question_id)
+                DO UPDATE SET file_path=excluded.file_path,
+                              mime_type=excluded.mime_type,
+                              duration_ms=excluded.duration_ms,
+                              size_bytes=excluded.size_bytes,
+                              created_at=CURRENT_TIMESTAMP
+            """, (participant_id, role, int(question_id), rel_path, mime, int(duration_ms) if duration_ms else None, size_bytes))
+        except sqlite3.OperationalError:
+            # اگر UNIQUE وجود ندارد: حذف قبلی و درج جدید
+            cur.execute("DELETE FROM voice_answers WHERE participant_id=? AND question_id=?", (participant_id, int(question_id)))
+            cur.execute("""
+                INSERT INTO voice_answers (participant_id, role, question_id, file_path, mime_type, duration_ms, size_bytes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (participant_id, role, int(question_id), rel_path, mime, int(duration_ms) if duration_ms else None, size_bytes))
+        conn.commit()
+
+    url = url_for('static', filename=rel_path)
+    return {'ok': True, 'url': url}
+
+# ----------------------------- آزمون تطبیقی -----------------------------
 @app.route('/test', methods=['GET', 'POST'])
 def test():
-    
-    # در ابتدای تابع
-    all_item_params_raw = get_all_item_params()
-    question_ids = [item[0] for item in all_item_params_raw]
-    all_item_params = [item[1:] for item in all_item_params_raw]  # فقط a, b, c
-
-
     if 'participant_id' not in session:
         return redirect(url_for('index'))
 
-    # اگر جواب سوالات قبلی وجود ندارد، شروع مجدد به index
-    if 'answered_questions' not in session:
-        return redirect(url_for('index'))
+    if 'answered_questions' not in session or not isinstance(session['answered_questions'], list):
+        session['answered_questions'] = []
+    if 'responses' not in session or not isinstance(session['responses'], list):
+        session['responses'] = []
+    if 'theta' not in session:
+        session['theta'] = 0.0
+    session.modified = True
 
-    answered = list(map(int, session.get('answered_questions', [])))
-    responses = list(map(int, session.get('responses', [])))
-    theta = float(session.get('theta', 0.0))
-
-    all_item_params = get_all_item_params()
+    rows = get_all_item_params()                    # [(id, a, b, c), ...]
+    question_ids = [r[0] for r in rows]             # IDها
+    all_item_params = [tuple(r[1:]) for r in rows]  # [(a,b,c), ...]
     total_questions = len(all_item_params)
 
     MIN_QUESTIONS = 8
     MAX_QUESTIONS = 30
-    THETA_CHANGE_THRESHOLD = 0.05
+    SE_TARGET = 0.30
 
+    answered = list(map(int, session['answered_questions']))
+    responses = list(map(int, session['responses']))
+    theta = float(session['theta'])
+
+    # ------------------- POST: ثبت پاسخ -------------------
     if request.method == 'POST':
         selected_option = request.form.get('answer')
-        if selected_option is None:
-            current_q_index = answered[-1] if answered else 0
-            question = get_question_by_id(current_q_index + 1)
-            progress = int(len(answered) / total_questions * 100)
-            return render_template('test.html', question=question, error="لطفا یک گزینه را انتخاب کنید.", progress=progress)
+        try:
+            sel = int(selected_option)
+        except (TypeError, ValueError):
+            sel = None
 
-        # سوال فعلی (آخرین سوال جواب داده شده)
-        current_question_id = answered[-1] 
-        correct_option = get_correct_answer(current_question_id)  # گزینه صحیح سوال
-        is_correct = int(selected_option) == correct_option
-        responses.append(1 if is_correct else 0)
+        if sel not in (1, 2, 3, 4):
+            current_idx = answered[-1] if answered else 0
+            current_qid = question_ids[current_idx]
+            question = get_question_by_id(current_qid)
+            progress = int(len(answered) / max(total_questions, 1) * 100)
+            return render_template('test.html', question=question, error="گزینهٔ معتبر انتخاب نشده است.", progress=progress)
 
-        # تخمین تتا با پاسخ‌های موجود و پارامتر سوالات جواب داده شده
+        current_idx = answered[-1]
+        current_qid = question_ids[current_idx]
+
+        co = get_correct_answer(current_qid)
+        co_int = int(co) if co is not None else None
+        is_correct = 1 if (co_int is not None and sel == co_int) else 0
+        responses.append(is_correct)
+
+        # IRT: در ابتدای آزمون MAP پایدارتر است
         answered_params = [all_item_params[i] for i in answered]
         old_theta = theta
-        theta = estimate_theta_mle(responses, answered_params)
+        if len(responses) < 3:
+            theta = estimate_theta_map(responses, answered_params, prior_mean=0.0, prior_var=1.0)
+        else:
+            theta = estimate_theta_mle(responses, answered_params)
         theta_change = abs(theta - old_theta)
-        print(f"θ تغییر: {theta_change:.4f}, آستانه: {THETA_CHANGE_THRESHOLD}")
+        se_now = theta_se(theta, answered_params)
 
-        # ذخیره پاسخ در دیتابیس
-        db = get_db_connection()
-        cursor = db.cursor()
-        participant_id = session['participant_id']
-        cursor.execute(
-            "INSERT INTO answers (user_id, question_id, response) VALUES (?, ?, ?)",
-            (participant_id, current_question_id, int(selected_option))
-        )
-        db.commit()
-
-        num_answered = len(answered) + 1  # چون الان پاسخ جدید هم اضافه شده
-
-        # شرط پایان آزمون اصلاح شده (بدون +1 اضافی)
-        if (num_answered >= 20 and theta_change < THETA_CHANGE_THRESHOLD) or num_answered >= MAX_QUESTIONS:
-            print("آزمون پایان یافت - شرط پایان برقرار است.")
-            cursor.execute("SELECT id FROM user_results WHERE user_id = ?", (participant_id,))
-            existing = cursor.fetchone()
-            if existing:
-                cursor.execute("UPDATE user_results SET theta = ? WHERE user_id = ?", (theta, participant_id))
+        # درج پاسخ در DB (سازگار با شِمای قدیمی که response NOT NULL دارد)
+        with sqlite3.connect(DATABASE, timeout=30) as db:
+            db.execute("PRAGMA busy_timeout=30000;")
+            cur = db.cursor()
+            participant_id = session['participant_id']
+            if answers_has_response_column():
+                cur.execute(
+                    "INSERT INTO answers (user_id, question_id, response, selected_option, is_correct) VALUES (?, ?, ?, ?, ?)",
+                    (participant_id, current_qid, sel, sel, is_correct)
+                )
             else:
-                cursor.execute("INSERT INTO user_results (user_id, theta) VALUES (?, ?)", (participant_id, theta))
+                cur.execute(
+                    "INSERT INTO answers (user_id, question_id, selected_option, is_correct) VALUES (?, ?, ?, ?)",
+                    (participant_id, current_qid, sel, is_correct)
+                )
             db.commit()
 
-            # ذخیره وضعیت نهایی در سشن
+        num_answered = len(responses)
+
+        # قانون توقف: SE < آستانه (بعد از حداقل تعداد سؤال) یا سقف تعداد
+        if (num_answered >= MIN_QUESTIONS and se_now < SE_TARGET) or num_answered >= MAX_QUESTIONS:
+            with sqlite3.connect(DATABASE, timeout=30) as conn:
+                conn.execute("PRAGMA busy_timeout=30000;")
+                cur = conn.cursor()
+                # update-then-insert (بدون نیاز به UNIQUE)
+                cur.execute("UPDATE user_results SET theta=? WHERE user_id=?", (float(theta), participant_id))
+                if cur.rowcount == 0:
+                    cur.execute("INSERT INTO user_results (user_id, theta) VALUES (?, ?)", (participant_id, float(theta)))
+                conn.commit()
+
             session['theta'] = float(theta)
-            session['answered_questions'] = list(map(int, answered))
-            session['responses'] = list(map(int, responses))
+            session['answered_questions'] = answered
+            session['responses'] = responses
             return redirect(url_for('result'))
 
-        # انتخاب سوال بعدی
-        next_q = select_next_question(theta, all_item_params, answered)
-        if next_q is None:
-            print("هیچ سوال جدیدی برای انتخاب وجود ندارد، انتقال به نتیجه.")
+        # انتخاب سؤال بعدی
+        next_idx = select_next_question(theta, all_item_params, answered)
+        if next_idx is None:
             session['theta'] = float(theta)
-            session['answered_questions'] = list(map(int, answered))
-            session['responses'] = list(map(int, responses))
+            session['answered_questions'] = answered
+            session['responses'] = responses
             return redirect(url_for('result'))
 
-        # افزودن سوال بعدی به لیست جواب داده شده
-        answered.append(next_q)
+        answered.append(next_idx)
 
-        # به‌روزرسانی سشن
-        session['answered_questions'] = list(map(int, answered))
-        session['responses'] = list(map(int, responses))
+        # به‌روزرسانی سشن و نمایش سؤال بعدی
+        session['answered_questions'] = answered
+        session['responses'] = responses
         session['theta'] = float(theta)
         session.modified = True
 
-        question = get_question_by_id(next_q) # تغییر دادم +1
-        progress = int(len(answered) / total_questions * 100)
+        next_qid = question_ids[next_idx]
+        question = get_question_by_id(next_qid)
+        progress = int(len(answered) / max(total_questions, 1) * 100)
         return render_template('test.html', question=question, progress=progress)
 
-    # حالت GET برای اولین بار ورود به آزمون
-    if not answered:
-        next_q = 0
-        answered = [next_q]
+    # ------------------- GET: شروع/ادامه آزمون -------------------
+    if request.method == 'GET' and not answered:
+        responses = []
+        theta = 0.0
+        start_idx = select_next_question(theta, all_item_params, answered_indices=[])
+        if start_idx is None:
+            flash('سؤالی برای شروع یافت نشد.', 'error')
+            return redirect(url_for('index'))
+        answered = [start_idx]
         session['answered_questions'] = answered
-        session['responses'] = []
-        session['theta'] = 0.0
+        session['responses'] = responses
+        session['theta'] = float(theta)
         session.modified = True
-    else:
-        next_q = answered[-1]
 
-    question = get_question_by_id(next_q + 1)
-    progress = int(len(answered) / total_questions * 100)
+    current_idx = answered[-1]
+    current_qid = question_ids[current_idx]
+    question = get_question_by_id(current_qid)
+    progress = int(len(answered) / max(total_questions, 1) * 100)
     return render_template('test.html', question=question, progress=progress)
 
+# ----------------------------- نتیجه -----------------------------
 @app.route('/result')
 def result():
     if 'responses' not in session or 'answered_questions' not in session:
@@ -457,15 +629,15 @@ def result():
     responses = list(map(int, session['responses']))
     answered = list(map(int, session['answered_questions']))
     theta = float(session.get('theta', 0.0))
-    all_item_params = get_all_item_params()
+    rows = get_all_item_params()
+    all_item_params = [tuple(r[1:]) for r in rows]
     answered_params = [all_item_params[i] for i in answered]
 
     icc_path = plot_icc(answered_params, save_path=f'static/icc_{uuid.uuid4().hex}.png')
     info_path = plot_item_information(answered_params, save_path=f'static/info_{uuid.uuid4().hex}.png')
 
-    user_name = session.get('name', 'کاربر ناشناس')
+    user_name = session.get('user_name', 'کاربر ناشناس')
 
-    # تحلیل ساده بر اساس θ
     if theta < -1:
         interpretation = "توانایی شما پایین‌تر از حد متوسط است."
     elif -1 <= theta <= 1:
@@ -480,7 +652,7 @@ def result():
                            info_image=info_path,
                            interpretation=interpretation)
 
-
+# ----------------------------- دانلود -----------------------------
 @app.route('/download/<filetype>')
 def download(filetype):
     if 'responses' not in session or 'answered_questions' not in session:
@@ -502,9 +674,14 @@ def download(filetype):
     else:
         return redirect(url_for('result'))
 
-
-
+# ----------------------------- اجرا -----------------------------
 if __name__ == '__main__':
     if not os.path.exists(DATABASE):
         init_db()
-    app.run(debug=True)
+    else:
+        # ایندکس‌های لازم برای UPSERT voice/user_results را مطمئن شو
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_user_results_user ON user_results(user_id);")
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_voice_answers_user_q ON voice_answers(participant_id, question_id);")
+            conn.commit()
+    app.run(debug=True, use_reloader=False, threaded=False)
