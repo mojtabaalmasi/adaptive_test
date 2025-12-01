@@ -802,140 +802,92 @@ def result():
     theta = float(session.get('theta', 0.0))
 
     # پارامترهای آیتم‌های پاسخ‌داده‌شده
-    rows = get_all_item_params()                       # [(id, a, b, c), ...]
-    all_item_params = [tuple(r[1:]) for r in rows]     # [(a,b,c), ...]
+    rows = get_all_item_params()
+    all_item_params = [tuple(r[1:]) for r in rows]
     answered_params = [all_item_params[i] for i in answered] if answered else []
 
     # نمودارها
-    icc_path = plot_icc(
-        answered_params,
-        save_path=f'static/icc_{uuid.uuid4().hex}.png'
-    ) if answered_params else None
+    icc_path = plot_icc(answered_params, f"static/icc_{uuid.uuid4().hex}.png") if answered_params else None
+    info_path = plot_item_information(answered_params, f"static/info_{uuid.uuid4().hex}.png") if answered_params else None
 
-    info_path = plot_item_information(
-        answered_params,
-        save_path=f'static/info_{uuid.uuid4().hex}.png'
-    ) if answered_params else None
+    # آمار
+    n_total = len(responses)
+    n_correct = sum(1 for r in responses if r == 1)
+    n_wrong = n_total - n_correct
+    accuracy = round((n_correct / n_total) * 100, 1) if n_total > 0 else 0
 
-    # آمار پایه
-    n_total   = len(responses)
-    n_correct = int(sum(1 for r in responses if r == 1))
-    n_wrong   = int(n_total - n_correct)
-    accuracy  = float(round((n_correct / n_total) * 100.0, 1)) if n_total > 0 else 0.0
-
-    # SE و بازه‌های اطمینان
+    # SE و بازه‌ها
     if answered_params:
         se = theta_se(theta, answered_params)
-        ci68 = (max(-4.0, theta - se),          min(4.0, theta + se))
-        ci95 = (max(-4.0, theta - 1.96 * se),   min(4.0, theta + 1.96 * se))
+        ci68 = (max(-4, theta - se), min(4, theta + se))
+        ci95 = (max(-4, theta - 1.96 * se), min(4, theta + 1.96 * se))
     else:
         se, ci68, ci95 = None, None, None
 
-    # تفسیر لایه‌بندی‌شده
+    # باند
     def ability_band(t):
-        if t < -2.0:      return "خیلی پایین"
-        elif t < -1.0:    return "پایین"
-        elif t <= 1.0:    return "متوسط"
-        elif t <= 2.0:    return "بالا"
-        else:             return "خیلی بالا"
+        if t < -2: return "خیلی پایین"
+        elif t < -1: return "پایین"
+        elif t <= 1: return "متوسط"
+        elif t <= 2: return "بالا"
+        else: return "خیلی بالا"
 
     band = ability_band(theta)
 
-    # تفسیر متنی کمی مفصل‌تر
+    # تفسیر
     if band == "خیلی پایین":
-        interpretation = (
-            "نتیجه نشان می‌دهد سطح توانایی شما در این حیطه بسیار پایین است. "
-            "پیشنهاد می‌شود با آیتم‌های بسیار ساده‌تر و مرور مفاهیم پایه شروع کنید "
-            "و سپس تدریجاً دشواری را بالا ببرید."
-        )
+        interpretation = "نتیجه نشان می‌دهد سطح توانایی شما بسیار پایین است..."
     elif band == "پایین":
-        interpretation = (
-            "سطح توانایی شما پایین‌تر از میانگین است. "
-            "تمرین هدفمند روی موضوعاتی که اشتباه بیشتری داشتید، "
-            "می‌تواند سریع‌ترین بهبود را ایجاد کند."
-        )
+        interpretation = "سطح توانایی شما پایین‌تر از میانگین است..."
     elif band == "متوسط":
-        interpretation = (
-            "توانایی شما نزدیک به میانگین شرکت‌کنندگان است. "
-            "با ادامه تمرین و قرار گرفتن در معرض آیتم‌های کمی دشوارتر، "
-            "می‌توانید θ را افزایش دهید."
-        )
+        interpretation = "توانایی شما نزدیک به میانگین است..."
     elif band == "بالا":
-        interpretation = (
-            "عملکرد شما بالاتر از میانگین است. "
-            "آیتم‌های چالش‌برانگیزتر می‌توانند تمایز دقیق‌تری از توانایی‌تان ارائه دهند."
-        )
-    else:  # خیلی بالا
-        interpretation = (
-            "توانایی شما بسیار بالا برآورد شده است. "
-            "برای تفکیک بیشتر، آیتم‌های بسیار دشوار و سنجه‌های پیشرفته‌تر توصیه می‌شود."
-        )
+        interpretation = "توانایی شما بالاتر از میانگین است..."
+    else:
+        interpretation = "توانایی شما بسیار بالا برآورد شده است..."
 
     user_name = session.get('user_name', 'کاربر ناشناس')
 
-    """ # آیا این شرکت‌کننده پس‌آزمون راهبردها را قبلاً پر کرده است؟
-    has_post_test = False
-    if 'participant_id' in session:
-        pid = int(session['participant_id'])
-        role = session.get('role', 'learner')
-        with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA busy_timeout=30000;")
-            cur = conn.cursor()
-            row = cur.execute(
-                SELECT 1
-                FROM strategy_answers sa
-                JOIN strategies s ON sa.strategy_id = s.id
-                WHERE sa.participant_id = ?
-                AND s.target_role = ?
-                LIMIT 1
-                
-                (pid, role)
-            ).fetchone() """
-    
-    has_post_test = (row is not None)  
-
-    role = session.get('role')
+    # -------------------------------------------------------------
+    #  چک کردن اینکه کدام پس‌آزمون باید نمایش داده شود
+    # -------------------------------------------------------------
+    role = session.get('role', 'learner')
+    pid = int(session['participant_id'])
 
     post_test_url = None
     post_test_done = False
 
-    if role == 'learner':
-        post_test_url = url_for('post_test')
-        # چک کن در strategy_answers چیزی هست یا نه
-        with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA busy_timeout=30000;")
-            cur = conn.cursor()
+    with sqlite3.connect(DATABASE, timeout=30) as conn:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA busy_timeout=30000;")
+        cur = conn.cursor()
+
+        if role == 'learner':
+            post_test_url = url_for('post_test')
             row = cur.execute(
                 "SELECT 1 FROM strategy_answers WHERE participant_id=? LIMIT 1",
-                (session['participant_id'],)
+                (pid,)
             ).fetchone()
             post_test_done = (row is not None)
 
-    elif role == 'teacher':
-        post_test_url = url_for('post_test_teacher')
-        with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA busy_timeout=30000;")
-            cur = conn.cursor()
+        elif role == 'teacher':
+            post_test_url = url_for('post_test_teacher')
             row = cur.execute(
                 "SELECT 1 FROM teacher_post_answers WHERE participant_id=? LIMIT 1",
-                (session['participant_id'],)
+                (pid,)
             ).fetchone()
             post_test_done = (row is not None)
 
-    elif role == 'manager':
-        post_test_url = url_for('post_test_manager')
-        with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA busy_timeout=30000;")
-            cur = conn.cursor()
+        elif role == 'manager':
+            post_test_url = url_for('post_test_manager')
             row = cur.execute(
                 "SELECT 1 FROM manager_post_answers WHERE participant_id=? LIMIT 1",
-                (session['participant_id'],)
+                (pid,)
             ).fetchone()
             post_test_done = (row is not None)
+
+    # has_post_test برای سازگاری با قالب قدیمی
+    has_post_test = post_test_done
 
     return render_template(
         'result.html',
@@ -953,10 +905,9 @@ def result():
         info_image=info_path,
         interpretation=interpretation,
         has_post_test=has_post_test,
-        role=session.get('role', 'learner'),
+        role=role,
         post_test_url=post_test_url,
-        post_test_done=post_test_done,
-
+        post_test_done=post_test_done
     )
 
 ##-----------------------------------پس آزمون----------------
