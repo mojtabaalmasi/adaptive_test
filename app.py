@@ -873,7 +873,7 @@ def result():
 
     user_name = session.get('user_name', 'کاربر ناشناس')
 
-    # آیا این شرکت‌کننده پس‌آزمون راهبردها را قبلاً پر کرده است؟
+    """ # آیا این شرکت‌کننده پس‌آزمون راهبردها را قبلاً پر کرده است؟
     has_post_test = False
     if 'participant_id' in session:
         pid = int(session['participant_id'])
@@ -883,18 +883,59 @@ def result():
             conn.execute("PRAGMA busy_timeout=30000;")
             cur = conn.cursor()
             row = cur.execute(
-                """
                 SELECT 1
                 FROM strategy_answers sa
                 JOIN strategies s ON sa.strategy_id = s.id
                 WHERE sa.participant_id = ?
                 AND s.target_role = ?
                 LIMIT 1
-                """,
+                
                 (pid, role)
-            ).fetchone()
-            has_post_test = (row is not None)
+            ).fetchone() """
+    
+    has_post_test = (row is not None)  
 
+    role = session.get('role')
+
+    post_test_url = None
+    post_test_done = False
+
+    if role == 'learner':
+        post_test_url = url_for('post_test')
+        # چک کن در strategy_answers چیزی هست یا نه
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=30000;")
+            cur = conn.cursor()
+            row = cur.execute(
+                "SELECT 1 FROM strategy_answers WHERE participant_id=? LIMIT 1",
+                (session['participant_id'],)
+            ).fetchone()
+            post_test_done = (row is not None)
+
+    elif role == 'teacher':
+        post_test_url = url_for('post_test_teacher')
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=30000;")
+            cur = conn.cursor()
+            row = cur.execute(
+                "SELECT 1 FROM teacher_post_answers WHERE participant_id=? LIMIT 1",
+                (session['participant_id'],)
+            ).fetchone()
+            post_test_done = (row is not None)
+
+    elif role == 'manager':
+        post_test_url = url_for('post_test_manager')
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=30000;")
+            cur = conn.cursor()
+            row = cur.execute(
+                "SELECT 1 FROM manager_post_answers WHERE participant_id=? LIMIT 1",
+                (session['participant_id'],)
+            ).fetchone()
+            post_test_done = (row is not None)
 
     return render_template(
         'result.html',
@@ -912,8 +953,149 @@ def result():
         info_image=info_path,
         interpretation=interpretation,
         has_post_test=has_post_test,
-        role=session.get('role', 'learner')
+        role=session.get('role', 'learner'),
+        post_test_url=post_test_url,
+        post_test_done=post_test_done,
 
+    )
+
+##-----------------------------------پس آزمون----------------
+@app.route('/post_test_teacher', methods=['GET', 'POST'])
+def post_test_teacher():
+    if 'participant_id' not in session:
+        return redirect(url_for('index'))
+    if session.get('role') != 'teacher':
+        return redirect(url_for('result'))
+
+    pid = int(session['participant_id'])
+
+    # خواندن سؤالات
+    with sqlite3.connect(DATABASE, timeout=30) as conn:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA busy_timeout=30000;")
+        cur = conn.cursor()
+        rows = cur.execute("""
+            SELECT id, text
+            FROM teacher_post_questions
+            WHERE is_active = 1
+            ORDER BY display_order, id
+        """).fetchall()
+
+    if not rows:
+        flash("هیچ سؤال پس‌آزمونی برای مدرسان تعریف نشده است.", "error")
+        return redirect(url_for('result'))
+
+    questions = [{'id': int(r['id']), 'text': r['text']} for r in rows]
+
+    if request.method == 'POST':
+        errors = {}
+        answers = {}
+
+        for q in questions:
+            key = f"q_{q['id']}"
+            val = (request.form.get(key) or "").strip()
+            if not val:
+                errors[q['id']] = "این سؤال الزامی است."
+            else:
+                answers[q['id']] = val
+
+        if errors:
+            return render_template(
+                "post_test_teacher.html",
+                questions=questions,
+                errors=errors,
+                values=request.form
+            )
+
+        # ذخیره در DB
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.execute("PRAGMA busy_timeout=30000;")
+            cur = conn.cursor()
+            for qid, txt in answers.items():
+                cur.execute("""
+                    INSERT INTO teacher_post_answers (participant_id, question_id, answer_text)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(participant_id, question_id)
+                    DO UPDATE SET answer_text=excluded.answer_text
+                """, (pid, qid, txt))
+            conn.commit()
+
+        session['post_test_teacher_saved'] = True
+        return redirect(url_for('thank_you'))
+
+    return render_template(
+        "post_test_teacher.html",
+        questions=questions,
+        errors={},
+        values={}
+    )
+
+@app.route('/post_test_manager', methods=['GET', 'POST'])
+def post_test_manager():
+    if 'participant_id' not in session:
+        return redirect(url_for('index'))
+    if session.get('role') != 'manager':
+        return redirect(url_for('result'))
+
+    pid = int(session['participant_id'])
+
+    with sqlite3.connect(DATABASE, timeout=30) as conn:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA busy_timeout=30000;")
+        cur = conn.cursor()
+        rows = cur.execute("""
+            SELECT id, text
+            FROM manager_post_questions
+            WHERE is_active = 1
+            ORDER BY display_order, id
+        """).fetchall()
+
+    if not rows:
+        flash("هیچ سؤال پس‌آزمونی برای مدیران تعریف نشده است.", "error")
+        return redirect(url_for('result'))
+
+    questions = [{'id': int(r['id']), 'text': r['text']} for r in rows]
+
+    if request.method == 'POST':
+        errors = {}
+        answers = {}
+
+        for q in questions:
+            key = f"q_{q['id']}"
+            val = (request.form.get(key) or "").strip()
+            if not val:
+                errors[q['id']] = "این سؤال الزامی است."
+            else:
+                answers[q['id']] = val
+
+        if errors:
+            return render_template(
+                "post_test_manager.html",
+                questions=questions,
+                errors=errors,
+                values=request.form
+            )
+
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.execute("PRAGMA busy_timeout=30000;")
+            cur = conn.cursor()
+            for qid, txt in answers.items():
+                cur.execute("""
+                    INSERT INTO manager_post_answers (participant_id, question_id, answer_text)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(participant_id, question_id)
+                    DO UPDATE SET answer_text=excluded.answer_text
+                """, (pid, qid, txt))
+            conn.commit()
+
+        session['post_test_manager_saved'] = True
+        return redirect(url_for('thank_you'))
+
+    return render_template(
+        "post_test_manager.html",
+        questions=questions,
+        errors={},
+        values={}
     )
 
 

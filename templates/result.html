@@ -108,19 +108,13 @@
         {% endif %}
 
         <div style="margin-top:12px">
-          {% if not has_post_test %}
-            {% if role == 'manager' %}
-              <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ مدیران مرکز</a>
-            {% elif role == 'teacher' %}
-              <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ مدرس آزفا</a>
-            {% else %}
-              <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: راهبردهای یادگیری فارسی</a>
-            {% endif %}
-          {% else %}
-            <p class="hint">پرسشنامهٔ پس‌آزمون مربوط به نقش شما قبلاً تکمیل شده است.</p>
+          {% if post_test_url and not post_test_done %}
+            <a class="btn" href="{{ post_test_url }}">تکمیل پرسشنامهٔ تکمیلی</a>
+          {% elif post_test_done %}
+            <p class="hint">پرسشنامهٔ تکمیلی مربوط به نقش شما قبلاً تکمیل شده است.</p>
           {% endif %}
+      </div>
 
-        </div>
       </div>
     </div>
 
