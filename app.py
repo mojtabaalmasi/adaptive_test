@@ -696,8 +696,9 @@ def post_test():
         return redirect(url_for('index'))
 
     participant_id = int(session['participant_id'])
+    role = session.get('role', 'learner')  # 'manager' یا 'teacher' یا 'learner'
 
-    # خواندن آیتم‌ها از DB
+    # --- خواندن آیتم‌ها از DB بر اساس نقش ---
     with sqlite3.connect(DATABASE, timeout=30) as conn:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA busy_timeout=30000;")
@@ -705,8 +706,10 @@ def post_test():
         rows = cur.execute("""
             SELECT id, strategy AS text, COALESCE(category, '') AS category
             FROM strategies
+            WHERE target_role = ?
             ORDER BY category, id
-        """).fetchall()
+        """, (role,)).fetchall()
+
 
     if not rows:
         flash("هیچ موردی در پرسشنامهٔ راهبردها تعریف نشده است.", "error")
@@ -874,15 +877,24 @@ def result():
     has_post_test = False
     if 'participant_id' in session:
         pid = int(session['participant_id'])
+        role = session.get('role', 'learner')
         with sqlite3.connect(DATABASE, timeout=30) as conn:
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA busy_timeout=30000;")
             cur = conn.cursor()
             row = cur.execute(
-                "SELECT 1 FROM strategy_answers WHERE participant_id = ? LIMIT 1",
-                (pid,)
+                """
+                SELECT 1
+                FROM strategy_answers sa
+                JOIN strategies s ON sa.strategy_id = s.id
+                WHERE sa.participant_id = ?
+                AND s.target_role = ?
+                LIMIT 1
+                """,
+                (pid, role)
             ).fetchone()
             has_post_test = (row is not None)
+
 
     return render_template(
         'result.html',
@@ -899,7 +911,9 @@ def result():
         icc_image=icc_path,
         info_image=info_path,
         interpretation=interpretation,
-        has_post_test=has_post_test
+        has_post_test=has_post_test,
+        role=session.get('role', 'learner')
+
     )
 
 

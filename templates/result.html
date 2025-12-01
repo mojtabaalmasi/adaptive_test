@@ -38,53 +38,146 @@
       <div class="hint">کاربر: {{ user_name }}</div>
     </div>
 
+    <!-- کارت‌های اصلی: خلاصه عددی + تفسیر -->
     <div class="grid">
       <div class="card">
         <h2 class="section-title">خلاصهٔ عددی</h2>
 
-        <div class="stat"><span class="k">امتیاز توانایی (θ):</span> <span class="v">{{ "%.3f"|format(theta) }}</span> <span class="band">{{ band }}</span></div>
+        <div class="stat">
+          <span class="k">امتیاز توانایی (θ):</span>
+          <span class="v">{{ "%.3f"|format(theta) }}</span>
+          <span class="band">{{ band }}</span>
+        </div>
+
         {% if se is not none %}
-        <div class="stat"><span class="k">خطای استاندارد (SE):</span> <span class="v">{{ "%.3f"|format(se) }}</span></div>
-        <div class="stat"><span class="k">بازهٔ ۶۸٪:</span> <span class="v">{{ "%.2f"|format(ci68[0]) }} تا {{ "%.2f"|format(ci68[1]) }}</span></div>
-        <div class="stat"><span class="k">بازهٔ ۹۵٪:</span> <span class="v">{{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}</span></div>
+        <div class="stat">
+          <span class="k">خطای استاندارد (SE):</span>
+          <span class="v">{{ "%.3f"|format(se) }}</span>
+        </div>
+        <div class="stat">
+          <span class="k">بازهٔ ۶۸٪:</span>
+          <span class="v">{{ "%.2f"|format(ci68[0]) }} تا {{ "%.2f"|format(ci68[1]) }}</span>
+        </div>
+        <div class="stat">
+          <span class="k">بازهٔ ۹۵٪:</span>
+          <span class="v">{{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}</span>
+        </div>
         {% endif %}
-        <div class="stat"><span class="k">تعداد سؤالات پاسخ‌داده‌شده:</span> <span class="v">{{ n_total }}</span></div>
-        <div class="stat"><span class="k">پاسخ‌های درست:</span> <span class="v">{{ n_correct }}</span></div>
-        <div class="stat"><span class="k">پاسخ‌های نادرست:</span> <span class="v">{{ n_wrong }}</span></div>
-        <div class="stat"><span class="k">دقت کل:</span> <span class="v">{{ "%.1f"|format(accuracy) }}٪</span></div>
+
+        <div class="stat">
+          <span class="k">تعداد سؤالات پاسخ‌داده‌شده:</span>
+          <span class="v">{{ n_total }}</span>
+        </div>
+        <div class="stat">
+          <span class="k">پاسخ‌های درست:</span>
+          <span class="v">{{ n_correct }}</span>
+        </div>
+        <div class="stat">
+          <span class="k">پاسخ‌های نادرست:</span>
+          <span class="v">{{ n_wrong }}</span>
+        </div>
+        <div class="stat">
+          <span class="k">دقت کل:</span>
+          <span class="v">{{ "%.1f"|format(accuracy) }}٪</span>
+        </div>
 
         <div style="margin-top:14px">
-          <div class="progress-bar"><div class="progress-fill" style="width: {{ accuracy }}%"></div></div>
-          <div class="hint" style="margin-top:6px">نسبت پاسخ‌های درست از کل پاسخ‌ها</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ accuracy }}%"></div>
+          </div>
+          <div class="hint" style="margin-top:6px">
+            نسبت پاسخ‌های درست از کل پاسخ‌ها
+          </div>
         </div>
       </div>
 
       <div class="card">
-        <h2 class="section-title">تفسیر</h2>
+        <h2 class="section-title">تفسیر نتیجه</h2>
         <p style="margin-top:0">{{ interpretation }}</p>
-        <p class="hint">توجه: θ برآوردی است و با افزایش تعداد آیتم‌ها، SE کاهش می‌یابد و بازهٔ اطمینان فشرده‌تر می‌شود.</p>
-        <div style="margin-top:12px">
-         {% if not has_post_test %}
-          <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ راهبردهای آزمون</a>
-              {% else %}
-          <p class="hint">پرسشنامهٔ راهبردهای آزمون را قبلاً تکمیل کرده‌اید.</p>
-          {% endif %}
-        </div>
 
+        <p class="hint">
+          در این آزمون به جای یک نمرهٔ خام، یک نمرهٔ «نرمال‌شده» گزارش می‌شود که با نماد θ (تتا) نشان داده شده است.
+          مقدار θ نشان می‌دهد سطح توانایی شما نسبت به یک مقیاس استاندارد (با میانگین حدود صفر) در چه محدوده‌ای قرار دارد.
+        </p>
+
+        {% if se is not none %}
+        <p class="hint">
+          خطای استاندارد (SE) نشان می‌دهد این برآورد چقدر مطمئن است: هرچه SE کوچک‌تر باشد،
+          بازهٔ اطمینان تنگ‌تر است و می‌توان با قطعیت بیشتری دربارهٔ توانایی شما اظهار نظر کرد.
+        </p>
+        {% endif %}
+
+        <div style="margin-top:12px">
+          {% if not has_post_test %}
+            {% if role == 'manager' %}
+              <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ مدیران مرکز</a>
+            {% elif role == 'teacher' %}
+              <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ مدرس آزفا</a>
+            {% else %}
+              <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: راهبردهای یادگیری فارسی</a>
+            {% endif %}
+          {% else %}
+            <p class="hint">پرسشنامهٔ پس‌آزمون مربوط به نقش شما قبلاً تکمیل شده است.</p>
+          {% endif %}
+
+        </div>
       </div>
     </div>
 
+    <!-- باکس فنی پژوهشی -->
+    <div class="card" style="margin-top:16px;">
+      <h2 class="section-title">گزارش فنی آزمون</h2>
+
+      <p class="hint" style="margin-top:4px;">
+        این آزمون بر اساس «سیستم آزمون تطبیقی» و مدل سه‌پارامتری پاسخ به سؤال (3PL IRT) نمرهٔ توانایی شما را برآورد کرده است.
+      </p>
+
+      <p class="hint" style="margin-top:4px;">
+        • نمرهٔ برآوردشدهٔ توانایی (θ̂): {{ "%.3f"|format(theta) }}  
+        {% if se is not none %}
+        • خطای استاندارد برآورد (SE): {{ "%.3f"|format(se) }}  
+        • بازهٔ اطمینان ۹۵٪ برای θ̂: {{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}
+        {% else %}
+        • به دلیل تعداد کم سؤالات، برآورد دقیق خطای استاندارد امکان‌پذیر نبوده است.
+        {% endif %}
+      </p>
+
+      <p class="hint" style="margin-top:6px;">
+        فرآیند آزمون به گونه‌ای طراحی شده است که با هر پاسخ، توانایی شما دوباره برآورد می‌شود و
+        سؤال بعدی بر اساس همین برآورد انتخاب می‌گردد. آزمون پس از رسیدن به شرایط زیر متوقف شده است:
+        حداقل تعداد سؤال، کنترل خطای استاندارد (SE)، پایداری نمرهٔ θ در چند سؤال پیاپی،
+        و همچنین سقف حداکثری تعداد سؤال برای حفظ زمان آزمون.
+      </p>
+
+      <p class="hint" style="margin-top:4px;">
+        این اطلاعات برای تحلیل‌های پژوهشی و روان‌سنجی (مانند مقایسهٔ گروه‌ها، بررسی دقت آزمون
+        و تحلیل عملکرد آیتم‌ها) قابل استفاده است و به شما نشان می‌دهد نمرهٔ گزارش‌شده تنها یک عدد خام نیست،
+        بلکه نتیجهٔ یک مدل اندازه‌گیری استاندارد است.
+      </p>
+    </div>
+
+    <!-- نمودارها -->
     <div class="grid" style="margin-top:16px">
       {% if icc_image %}
       <div class="card img-wrap">
         <div class="section-title">منحنی‌های ICC آیتم‌های پاسخ‌داده‌شده</div>
         <img src="{{ url_for('static', filename=icc_image.split('static/')[1]) if 'static/' in icc_image else icc_image }}" alt="ICC">
+        <p class="hint" style="margin-top:8px;">
+          هر منحنی نشان می‌دهد احتمال پاسخ صحیح به هر سؤال، در سطوح مختلف توانایی (θ) چگونه تغییر می‌کند.
+          هرچه منحنی یک سؤال در محدودهٔ θ شما شیب تندتری داشته باشد، آن سؤال برای سنجش دقیق‌تر شما مفیدتر بوده است.
+        </p>
       </div>
       {% endif %}
+
       {% if info_image %}
       <div class="card img-wrap">
         <div class="section-title">تابع اطلاعات کل آزمون</div>
         <img src="{{ url_for('static', filename=info_image.split('static/')[1]) if 'static/' in info_image else info_image }}" alt="Info">
+        <p class="hint" style="margin-top:8px;">
+          این نمودار نشان می‌دهد آزمون در کدام نواحی θ بیشترین دقت را دارد.
+          هرچه منحنی بالاتر باشد، آزمون در آن سطح توانایی، اطلاعات بیشتری فراهم می‌کند
+          و نمرهٔ شما با خطای کمتر برآورد می‌شود.
+        </p>
       </div>
       {% endif %}
     </div>
