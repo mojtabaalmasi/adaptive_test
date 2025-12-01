@@ -1,11 +1,189 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>وب‌سایت من</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>آزمون تطبیقی فارسی</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 32px 28px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 26px;
+            color: #1f3b73;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-top: 24px;
+            color: #23395d;
+        }
+
+        p {
+            line-height: 1.9;
+            font-size: 14px;
+            color: #444;
+        }
+
+        ul {
+            padding-right: 20px;
+            line-height: 1.9;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e7f0ff;
+            color: #3456c3;
+            font-size: 11px;
+            margin-bottom: 10px;
+        }
+
+        .start-box {
+            margin-top: 28px;
+            padding: 16px 18px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px dashed #c4d0f5;
+        }
+
+        .btn-main {
+            display: inline-block;
+            margin-top: 12px;
+            background: #3456c3;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+            box-shadow: 0 4px 12px rgba(52,86,195,0.35);
+        }
+
+        .btn-main:hover {
+            background: #2a47a4;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(52,86,195,0.45);
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .step-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid #e1e7f5;
+        }
+
+        .step-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #23395d;
+            margin-bottom: 4px;
+        }
+
+        .step-body {
+            font-size: 13px;
+            color: #555;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 16px;
+                padding: 20px 18px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>به وب‌سایت من خوش آمدید</h1>
+<div class="container">
+    <div class="badge">آزمون تطبیقی (Computerized Adaptive Test)</div>
+    <h1>به سامانه آزمون تطبیقی خوش آمدید</h1>
+
+    <p>
+        در این سامانه، سؤال‌ها به‌صورت <strong>تطبیقی</strong> و بر اساس پاسخ‌های قبلی شما انتخاب می‌شوند.
+        یعنی اگر سؤال‌ها برای شما ساده باشند، به‌تدریج دشوارتر می‌شوند و اگر سخت باشند، سطح پرسش‌ها
+        کاهش می‌یابد تا ارزیابی منصفانه‌تری از توانایی‌تان انجام شود. هدف این آزمون، برآورد دقیق‌تر
+        سطح مهارت شما با تعداد سؤال‌های کمتر است.
+    </p>
+
+    <h2>این آزمون چگونه اجرا می‌شود؟</h2>
+
+    <div class="steps">
+        <div class="step-card">
+            <div class="step-title">۱. ثبت اطلاعات اولیه</div>
+            <div class="step-body">
+                ابتدا فرم کوتاهی را دربارهٔ مشخصات فردی و نقش خود (مثلاً زبان‌آموز یا مدرس) تکمیل می‌کنید.
+                این اطلاعات صرفاً برای تحلیل پژوهش و گزارش‌های کلی استفاده می‌شود.
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">۲. پاسخ‌گویی به سؤال‌ها</div>
+            <div class="step-body">
+                در هر لحظه فقط یک سؤال می‌بینید. پس از انتخاب گزینه و ثبت پاسخ، سیستم
+                سطح توانایی شما را به‌روزرسانی می‌کند و سؤال بعدی را بر اساس آن انتخاب می‌کند.
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">۳. پایان آزمون و مشاهده نتیجه</div>
+            <div class="step-body">
+                آزمون زمانی پایان می‌یابد که به تعداد مشخصی سؤال برسیم یا الگوریتم به
+                برآورد پایدار و دقیق‌تری از توانایی شما برسد. در پایان آزمون، خلاصه‌ای از
+                عملکرد شما و برآورد θ نمایش داده خواهد شد.
+            </div>
+        </div>
+    </div>
+
+    <h2>نکات مهم قبل از شروع</h2>
+    <ul>
+        <li>از دکمهٔ «بازگشت» مرورگر در حین آزمون استفاده نکنید.</li>
+        <li>در هر سؤال، گزینه‌ای را انتخاب کنید که بهترین توصیف از وضعیت واقعی شماست.</li>
+        <li>بهتر است آزمون را در محیطی آرام و بدون حواس‌پرتی انجام دهید.</li>
+    </ul>
+
+    <div class="start-box">
+        <p><strong>آماده شروع هستید؟</strong><br>
+            برای ورود به فرم ثبت اطلاعات و شروع آزمون روی دکمه زیر کلیک کنید.
+        </p>
+
+        <!-- این دکمه می‌برد به همان /register که در app.py تعریف کرده‌ای -->
+        <a href="{{ url_for('register') }}" class="btn-main">ورود به فرم ثبت اطلاعات و شروع آزمون</a>
+
+        <div class="meta">
+            مدت زمان آزمون بسته به سرعت پاسخ‌گویی شماست، اما معمولاً بین ۵ تا ۱۵ دقیقه طول می‌کشد.
+        </div>
+    </div>
+</div>
 </body>
 </html>

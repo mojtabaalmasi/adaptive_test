@@ -13,7 +13,6 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
 
-
 DATABASE = 'questions.db'
 
 def get_db_connection():
@@ -149,6 +148,23 @@ def init_db():
             FOREIGN KEY(question_id)   REFERENCES manager_questions(id)        ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS strategies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            strategy TEXT NOT NULL,
+            category TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS strategy_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            participant_id INTEGER NOT NULL,
+            strategy_id INTEGER NOT NULL,
+            choice INTEGER NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME,
+            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE,
+            FOREIGN KEY(strategy_id) REFERENCES strategies(id) ON DELETE CASCADE,
+            UNIQUE(participant_id, strategy_id)
+        );
         """)
         # ایندکس‌های موردنیاز برای UPSERT
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_user_results_user ON user_results(user_id);")
@@ -158,7 +174,10 @@ def init_db():
 # ----------------------------- لایهٔ سؤال/پارامترها -----------------------------
 def get_question_by_id(question_id: int):
     conn = get_db_connection()
-    row = conn.execute("SELECT id, text, option1, option2, option3, option4 FROM questions WHERE id = ?", (question_id,)).fetchone()
+    row = conn.execute(
+        "SELECT id, text, option1, option2, option3, option4 FROM questions WHERE id = ?",
+        (question_id,)
+    ).fetchone()
     conn.close()
     if row:
         return {
@@ -196,11 +215,16 @@ def three_pl_probability(theta, a, b, c):
 def item_information(theta, a, b, c):
     p = three_pl_probability(theta, a, b, c)
     q = 1.0 - p
-    info = (a ** 2) * ((p - c) ** 2) / ((1.0 - c) ** 2 + EPS) * (q / p)
+    denom = (1.0 - c) ** 2 + EPS
+    info = (a ** 2) * ((p - c) ** 2) / denom * (q / p)
     return float(info) if np.isfinite(info) and info > 0 else 0.0
 
 def test_information(theta, item_params):
     return float(sum(item_information(theta, a, b, c) for (a, b, c) in item_params))
+
+def theta_se(theta, item_params):
+    I = test_information(theta, item_params)
+    return float(1.0 / np.sqrt(max(I, EPS)))
 
 def _grad_loglik_theta(theta, responses, item_params):
     g = 0.0
@@ -223,7 +247,8 @@ def estimate_theta_mle(responses, item_params, lr=0.01, max_iter=50, tol=1e-4):
         theta = theta_new
     return theta
 
-def estimate_theta_map(responses, item_params, theta0=0.0, prior_mean=0.0, prior_var=1.0, max_iter=50, tol=1e-4):
+def estimate_theta_map(responses, item_params, theta0=0.0, prior_mean=0.0, prior_var=1.0,
+                       max_iter=50, tol=1e-4):
     theta = float(np.clip(theta0, THETA_MIN, THETA_MAX))
     inv_var = 1.0 / max(prior_var, EPS)
     for _ in range(max_iter):
@@ -239,10 +264,6 @@ def estimate_theta_map(responses, item_params, theta0=0.0, prior_mean=0.0, prior
             return theta_new
         theta = theta_new
     return theta
-
-def theta_se(theta, item_params):
-    I = test_information(theta, item_params)
-    return float(1.0 / np.sqrt(max(I, EPS)))
 
 def select_next_question(theta, all_item_params, answered_indices):
     best_idx, best_info = None, -1.0
@@ -328,11 +349,9 @@ def save_results_to_word(filepath, responses, answered_indices, theta):
 # ----------------------------- مسیرهای وب -----------------------------
 @app.route('/')
 def index():
+    # هر بار که وارد صفحهٔ اصلی می‌شوی، سشن قبلی پاک شود
     session.clear()
-    session['answered_questions'] = []
-    session['responses'] = []
-    session['theta'] = 0.0
-    return redirect(url_for('register'))
+    return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -461,7 +480,6 @@ def api_voice_answer():
     with sqlite3.connect(DATABASE, timeout=30) as conn:
         conn.execute("PRAGMA busy_timeout=30000;")
         cur = conn.cursor()
-        # UPSERT (نیازمند UNIQUE(participant_id, question_id))
         try:
             cur.execute("""
                 INSERT INTO voice_answers (participant_id, role, question_id, file_path, mime_type, duration_ms, size_bytes)
@@ -474,7 +492,6 @@ def api_voice_answer():
                               created_at=CURRENT_TIMESTAMP
             """, (participant_id, role, int(question_id), rel_path, mime, int(duration_ms) if duration_ms else None, size_bytes))
         except sqlite3.OperationalError:
-            # اگر UNIQUE وجود ندارد: حذف قبلی و درج جدید
             cur.execute("DELETE FROM voice_answers WHERE participant_id=? AND question_id=?", (participant_id, int(question_id)))
             cur.execute("""
                 INSERT INTO voice_answers (participant_id, role, question_id, file_path, mime_type, duration_ms, size_bytes)
@@ -488,41 +505,35 @@ def api_voice_answer():
 # ----------------------------- آزمون تطبیقی -----------------------------
 @app.route('/test', methods=['GET', 'POST'])
 def test():
-    # دسترسی
     if 'participant_id' not in session:
         return redirect(url_for('index'))
 
-    # آماده‌سازی سشن
     session.setdefault('answered_questions', [])
     session.setdefault('responses', [])
     session.setdefault('theta', 0.0)
     session.setdefault('stable_streak', 0)
 
-    answered = list(map(int, session['answered_questions']))  # اندیس‌های 0-مبنا
-    responses = list(map(int, session['responses']))          # 0/1
+    answered = list(map(int, session['answered_questions']))
+    responses = list(map(int, session['responses']))
     theta = float(session['theta'])
     streak = int(session['stable_streak'])
 
-    # بانک سؤال
-    rows = get_all_item_params()                    # [(id, a, b, c), ...]
+    rows = get_all_item_params()
     if not rows:
         flash('بانک سؤال خالی است.', 'error')
         return redirect(url_for('index'))
-    question_ids = [r[0] for r in rows]             # شناسه‌های واقعی DB
-    all_item_params = [tuple(r[1:]) for r in rows]  # [(a,b,c), ...]
-
+    question_ids = [r[0] for r in rows]
+    all_item_params = [tuple(r[1:]) for r in rows]
     total_questions = len(all_item_params)
 
-    # تنظیمات CAT
-    MIN_QUESTIONS = 8          # حداقل آیتم قبل از شروع ارزیابی توقف
-    HARD_MAX     = 22          # سقف ایمنی
-    SE_TARGET    = 0.30        # هدف دقت
-    DELTA_TARGET = 0.03        # آستانه پایداری Δθ
-    STREAK_NEED  = 2           # چند بار پیاپی Δθ کوچک
-    CUT_SCORE    = 0.0         # مرز (مثلاً قبولی = 0)
-    Z_CI         = 1.96        # 95% CI
+    MIN_QUESTIONS = 8
+    HARD_MAX     = 22
+    SE_TARGET    = 0.30
+    DELTA_TARGET = 0.03
+    STREAK_NEED  = 2
+    CUT_SCORE    = 0.0
+    Z_CI         = 1.96
 
-    # ------------------- GET: شروع آزمون (اگر هنوز شروع نشده) -------------------
     if request.method == 'GET' and not answered:
         theta = 0.0
         responses = []
@@ -546,7 +557,6 @@ def test():
         progress = int(len(answered) / max(total_questions, 1) * 100)
         return render_template('test.html', question=question, progress=progress)
 
-    # ------------------- POST: ثبت پاسخ -------------------
     if request.method == 'POST':
         selected_option = request.form.get('answer')
         try:
@@ -564,11 +574,9 @@ def test():
                 error="گزینهٔ معتبر انتخاب نشده است.", progress=progress
             )
 
-        # سؤال فعلی (شناسهٔ واقعی)
         current_idx = answered[-1]
         current_qid = question_ids[current_idx]
 
-        # درست/نادرست
         co = get_correct_answer(current_qid)
         try:
             co_int = int(co)
@@ -577,7 +585,6 @@ def test():
         is_correct = 1 if (co_int is not None and sel == co_int) else 0
         responses.append(is_correct)
 
-        # برآورد θ (ابتدا MAP پایدارتر است)
         answered_params = [all_item_params[i] for i in answered]
         old_theta = theta
         if len(responses) < 3:
@@ -587,7 +594,6 @@ def test():
         theta_change = abs(theta - old_theta)
         se_now = theta_se(theta, answered_params)
 
-        # ذخیره پاسخ در DB (سازگار با شِمای قدیمی که response NOT NULL دارد)
         participant_id = session['participant_id']
         with sqlite3.connect(DATABASE, timeout=30) as db:
             db.execute("PRAGMA busy_timeout=30000;")
@@ -609,14 +615,12 @@ def test():
                 )
             db.commit()
 
-        # به‌روزرسانی پایداری Δθ
         if theta_change < DELTA_TARGET:
             streak += 1
         else:
             streak = 0
         session['stable_streak'] = int(streak)
 
-        # معیارهای توقف
         num_answered = len(responses)
         above_cut = (se_now is not None) and ((theta - Z_CI * se_now) > CUT_SCORE)
         below_cut = (se_now is not None) and ((theta + Z_CI * se_now) < CUT_SCORE)
@@ -636,7 +640,6 @@ def test():
             stop_reason = f"رسیدن به سقف {HARD_MAX} سؤال"
 
         if stop_reason is not None:
-            # ذخیره نتیجهٔ نهایی
             with sqlite3.connect(DATABASE, timeout=30) as conn:
                 conn.execute("PRAGMA busy_timeout=30000;")
                 cur = conn.cursor()
@@ -652,10 +655,8 @@ def test():
             session.modified = True
             return redirect(url_for('result'))
 
-        # انتخاب سؤال بعدی
         next_idx = select_next_question(theta, all_item_params, answered)
         if next_idx is None:
-            # بانک تمام شد
             with sqlite3.connect(DATABASE, timeout=30) as conn:
                 conn.execute("PRAGMA busy_timeout=30000;")
                 cur = conn.cursor()
@@ -671,7 +672,6 @@ def test():
             session.modified = True
             return redirect(url_for('result'))
 
-        # ادامه آزمون
         answered.append(next_idx)
         session['answered_questions'] = answered
         session['responses'] = responses
@@ -683,7 +683,6 @@ def test():
         progress = int(len(answered) / max(total_questions, 1) * 100)
         return render_template('test.html', question=question, progress=progress)
 
-    # ------------------- نمایش سؤال جاری (در ادامهٔ GET) -------------------
     current_idx = answered[-1]
     current_qid = question_ids[current_idx]
     question = get_question_by_id(current_qid)
@@ -691,14 +690,14 @@ def test():
     return render_template('test.html', question=question, progress=progress)
 
 # ----------------------------- پس آزمون راهبردها -----------------------------
-
 @app.route('/post_test', methods=['GET', 'POST'])
 def post_test():
     if 'participant_id' not in session:
         return redirect(url_for('index'))
+
     participant_id = int(session['participant_id'])
 
-    # سؤالات از جدول strategies (گروه‌بندی بر اساس category)
+    # خواندن آیتم‌ها از DB
     with sqlite3.connect(DATABASE, timeout=30) as conn:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA busy_timeout=30000;")
@@ -709,110 +708,85 @@ def post_test():
             ORDER BY category, id
         """).fetchall()
 
-    # ساخت گروه‌ها برای نمایش تمیز
+    if not rows:
+        flash("هیچ موردی در پرسشنامهٔ راهبردها تعریف نشده است.", "error")
+        return redirect(url_for('result'))
+
+    # ساخت گروه‌ها
     groups = []
     last_cat = None
     for r in rows:
-        cat = r['category']
+        cat = r["category"]
         if cat != last_cat:
-            groups.append({'category': cat, 'items': []})
+            groups.append({"category": cat, "items": []})
             last_cat = cat
-        groups[-1]['items'].append({'id': int(r['id']), 'text': r['text']})
+        groups[-1]["items"].append({"id": int(r["id"]), "text": r["text"]})
 
-    # اگر پرسشنامه خالی بود
-    if not rows:
-        flash('هیچ موردی در پرسشنامهٔ راهبردها تعریف نشده است.', 'error')
-        return redirect(url_for('result'))
-
-    if request.method == 'POST':
+    if request.method == "POST":
         errors = {}
         payload = {}
-        # همهٔ آیتم‌ها را «الزامی» فرض کرده‌ایم؛ اگر نمی‌خواهی، این بخش را سفارشی کن
+
         for g in groups:
-            for item in g['items']:
+            for item in g["items"]:
                 key = f"s_{item['id']}"
                 val = request.form.get(key)
+
                 if not val:
-                    errors[item['id']] = "الزامی"
+                    errors[item["id"]] = "الزامی"
                     continue
+
                 try:
                     choice = int(val)
                 except ValueError:
-                    errors[item['id']] = "نامعتبر"
+                    errors[item["id"]] = "نامعتبر"
                     continue
-                if choice < 1 or choice > 5:
-                    errors[item['id']] = "بازه ۱ تا ۵"
+
+                if not (1 <= choice <= 5):
+                    errors[item["id"]] = "بازه ۱ تا ۵"
                     continue
-                payload[item['id']] = choice
+
+                payload[item["id"]] = choice
 
         if errors:
-            # نمایش دوباره با خطا و مقادیر انتخاب‌شده
-            return render_template('strategies_survey.html',
-                                   groups=groups, errors=errors, values=request.form)
+            return render_template(
+                "strategies_survey.html",
+                groups=groups,
+                errors=errors,
+                values=request.form,
+            )
 
-        # ذخیرهٔ پاسخ‌ها (UPSERT روی (participant_id, strategy_id))
         with sqlite3.connect(DATABASE, timeout=30) as conn:
             conn.execute("PRAGMA busy_timeout=30000;")
             cur = conn.cursor()
-            try:
-                for sid, choice in payload.items():
-                    cur.execute("""
-                        INSERT INTO strategy_answers (participant_id, strategy_id, choice)
-                        VALUES (?, ?, ?)
-                        ON CONFLICT(participant_id, strategy_id)
-                        DO UPDATE SET choice=excluded.choice,
-                                      updated_at=CURRENT_TIMESTAMP
-                    """, (participant_id, sid, choice))
-            except sqlite3.OperationalError:
-                # اگر قید یکتا موجود نباشد، fallback: حذف-و-درج
-                for sid, choice in payload.items():
-                    cur.execute("DELETE FROM strategy_answers WHERE participant_id=? AND strategy_id=?",
-                                (participant_id, sid))
-                    cur.execute("""
-                        INSERT INTO strategy_answers (participant_id, strategy_id, choice)
-                        VALUES (?, ?, ?)
-                    """, (participant_id, sid, choice))
+            for sid, choice in payload.items():
+                cur.execute(
+                    """
+                    INSERT INTO strategy_answers (participant_id, strategy_id, choice)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(participant_id, strategy_id)
+                    DO UPDATE SET choice=excluded.choice,
+                                  updated_at=CURRENT_TIMESTAMP
+                    """,
+                    (participant_id, sid, choice),
+                )
             conn.commit()
 
-        # بعد از ذخیرهٔ پاسخ‌ها
-        session['post_test_saved'] = True
-        return redirect(url_for('thank_you'))
+        session["post_test_saved"] = True
+        return redirect(url_for("thank_you"))
 
-
-    rt_ms = request.form.get('rt_ms')
-    try: rt_ms = int(rt_ms)
-    except: rt_ms = None
-
-    info_here = item_information(theta, *all_item_params[current_idx])  # قبل از آپدیت θ
-
-    # درج در answers_meta
-    with sqlite3.connect(DATABASE, timeout=30) as conn:
-        conn.execute("PRAGMA busy_timeout=30000;")
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO answers_meta
-            (session_id, user_id, question_id, order_idx,
-            selected_option, is_correct, theta_before, theta_after,
-            se_after, info_at_theta, rt_ms)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (session['cat_session_id'], session['participant_id'], current_qid,
-            len(responses), sel, is_correct, float(old_theta), float(theta),
-            float(se_now), float(info_here), rt_ms))
-        conn.commit()
-
-    # GET
-    return render_template('strategies_survey.html', groups=groups, errors={}, values={})
+    return render_template(
+        "strategies_survey.html",
+        groups=groups,
+        errors={},
+        values={},
+    )
 
 # ----------------------------- قدردانی -----------------------------
-
 @app.route('/thank_you')
 def thank_you():
     if 'participant_id' not in session:
-        # اگر کسی مستقیم آمد
         return redirect(url_for('index'))
     return render_template('thank_you.html', user_name=session.get('user_name', 'کاربر گرامی'))
-
-
 
 # ----------------------------- نتیجه -----------------------------
 @app.route('/result')
@@ -830,8 +804,15 @@ def result():
     answered_params = [all_item_params[i] for i in answered] if answered else []
 
     # نمودارها
-    icc_path = plot_icc(answered_params, save_path=f'static/icc_{uuid.uuid4().hex}.png') if answered_params else None
-    info_path = plot_item_information(answered_params, save_path=f'static/info_{uuid.uuid4().hex}.png') if answered_params else None
+    icc_path = plot_icc(
+        answered_params,
+        save_path=f'static/icc_{uuid.uuid4().hex}.png'
+    ) if answered_params else None
+
+    info_path = plot_item_information(
+        answered_params,
+        save_path=f'static/info_{uuid.uuid4().hex}.png'
+    ) if answered_params else None
 
     # آمار پایه
     n_total   = len(responses)
@@ -842,8 +823,8 @@ def result():
     # SE و بازه‌های اطمینان
     if answered_params:
         se = theta_se(theta, answered_params)
-        ci68 = (max(-4.0, theta - se),  min(4.0, theta + se))
-        ci95 = (max(-4.0, theta - 1.96*se), min(4.0, theta + 1.96*se))
+        ci68 = (max(-4.0, theta - se),          min(4.0, theta + se))
+        ci95 = (max(-4.0, theta - 1.96 * se),   min(4.0, theta + 1.96 * se))
     else:
         se, ci68, ci95 = None, None, None
 
@@ -859,17 +840,49 @@ def result():
 
     # تفسیر متنی کمی مفصل‌تر
     if band == "خیلی پایین":
-        interpretation = "نتیجه نشان می‌دهد سطح توانایی شما در این حیطه بسیار پایین است. پیشنهاد می‌شود با آیتم‌های بسیار ساده‌تر و مرور مفاهیم پایه شروع کنید و سپس تدریجاً دشواری را بالا ببرید."
+        interpretation = (
+            "نتیجه نشان می‌دهد سطح توانایی شما در این حیطه بسیار پایین است. "
+            "پیشنهاد می‌شود با آیتم‌های بسیار ساده‌تر و مرور مفاهیم پایه شروع کنید "
+            "و سپس تدریجاً دشواری را بالا ببرید."
+        )
     elif band == "پایین":
-        interpretation = "سطح توانایی شما پایین‌تر از میانگین است. تمرین هدفمند روی موضوعاتی که اشتباه بیشتری داشتید، می‌تواند سریع‌ترین بهبود را ایجاد کند."
+        interpretation = (
+            "سطح توانایی شما پایین‌تر از میانگین است. "
+            "تمرین هدفمند روی موضوعاتی که اشتباه بیشتری داشتید، "
+            "می‌تواند سریع‌ترین بهبود را ایجاد کند."
+        )
     elif band == "متوسط":
-        interpretation = "توانایی شما نزدیک به میانگین شرکت‌کنندگان است. با ادامه تمرین و قرار گرفتن در معرض آیتم‌های کمی دشوارتر، می‌توانید θ را افزایش دهید."
+        interpretation = (
+            "توانایی شما نزدیک به میانگین شرکت‌کنندگان است. "
+            "با ادامه تمرین و قرار گرفتن در معرض آیتم‌های کمی دشوارتر، "
+            "می‌توانید θ را افزایش دهید."
+        )
     elif band == "بالا":
-        interpretation = "عملکرد شما بالاتر از میانگین است. آیتم‌های چالش‌برانگیزتر می‌توانند تمایز دقیق‌تری از توانایی‌تان ارائه دهند."
+        interpretation = (
+            "عملکرد شما بالاتر از میانگین است. "
+            "آیتم‌های چالش‌برانگیزتر می‌توانند تمایز دقیق‌تری از توانایی‌تان ارائه دهند."
+        )
     else:  # خیلی بالا
-        interpretation = "توانایی شما بسیار بالا برآورد شده است. برای تفکیک بیشتر، آیتم‌های بسیار دشوار و سنجه‌های پیشرفته‌تر توصیه می‌شود."
+        interpretation = (
+            "توانایی شما بسیار بالا برآورد شده است. "
+            "برای تفکیک بیشتر، آیتم‌های بسیار دشوار و سنجه‌های پیشرفته‌تر توصیه می‌شود."
+        )
 
     user_name = session.get('user_name', 'کاربر ناشناس')
+
+    # آیا این شرکت‌کننده پس‌آزمون راهبردها را قبلاً پر کرده است؟
+    has_post_test = False
+    if 'participant_id' in session:
+        pid = int(session['participant_id'])
+        with sqlite3.connect(DATABASE, timeout=30) as conn:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=30000;")
+            cur = conn.cursor()
+            row = cur.execute(
+                "SELECT 1 FROM strategy_answers WHERE participant_id = ? LIMIT 1",
+                (pid,)
+            ).fetchone()
+            has_post_test = (row is not None)
 
     return render_template(
         'result.html',
@@ -885,7 +898,8 @@ def result():
         user_name=user_name,
         icc_image=icc_path,
         info_image=info_path,
-        interpretation=interpretation
+        interpretation=interpretation,
+        has_post_test=has_post_test
     )
 
 
@@ -911,6 +925,7 @@ def download(filetype):
     else:
         return redirect(url_for('result'))
 
+
 # ----------------------------- اجرا -----------------------------
 if __name__ == '__main__':
     if not os.path.exists(DATABASE):
@@ -918,7 +933,11 @@ if __name__ == '__main__':
     else:
         # ایندکس‌های لازم برای UPSERT voice/user_results را مطمئن شو
         with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_user_results_user ON user_results(user_id);")
-            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_voice_answers_user_q ON voice_answers(participant_id, question_id);")
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_user_results_user ON user_results(user_id);"
+            )
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_voice_answers_user_q ON voice_answers(participant_id, question_id);"
+            )
             conn.commit()
     app.run(debug=True, use_reloader=False, threaded=False)

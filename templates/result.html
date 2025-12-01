@@ -64,8 +64,13 @@
         <p style="margin-top:0">{{ interpretation }}</p>
         <p class="hint">توجه: θ برآوردی است و با افزایش تعداد آیتم‌ها، SE کاهش می‌یابد و بازهٔ اطمینان فشرده‌تر می‌شود.</p>
         <div style="margin-top:12px">
+         {% if not has_post_test %}
           <a class="btn" href="{{ url_for('post_test') }}">پس‌آزمون: پرسشنامهٔ راهبردهای آزمون</a>
+              {% else %}
+          <p class="hint">پرسشنامهٔ راهبردهای آزمون را قبلاً تکمیل کرده‌اید.</p>
+          {% endif %}
         </div>
+
       </div>
     </div>
 
