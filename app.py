@@ -13,7 +13,8 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
 
-DATABASE = 'questions.db'
+DATABASE = os.environ.get('DATABASE_PATH', '/var/data/questions.db')
+
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE, timeout=30)
@@ -913,141 +914,123 @@ def result():
 ##-----------------------------------پس آزمون----------------
 @app.route('/post_test_teacher', methods=['GET', 'POST'])
 def post_test_teacher():
-    if 'participant_id' not in session:
+    if 'participant_id' not in session or session.get('role') != 'teacher':
         return redirect(url_for('index'))
-    if session.get('role') != 'teacher':
-        return redirect(url_for('result'))
 
-    pid = int(session['participant_id'])
+    pid = session['participant_id']
 
-    # خواندن سؤالات
-    with sqlite3.connect(DATABASE, timeout=30) as conn:
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA busy_timeout=30000;")
-        cur = conn.cursor()
-        rows = cur.execute("""
-            SELECT id, text
-            FROM teacher_post_questions
-            WHERE is_active = 1
-            ORDER BY display_order, id
-        """).fetchall()
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
 
-    if not rows:
-        flash("هیچ سؤال پس‌آزمونی برای مدرسان تعریف نشده است.", "error")
-        return redirect(url_for('result'))
+    # آیا قبلاً پر کرده؟
+    row = cur.execute(
+        "SELECT 1 FROM teacher_post_answers WHERE participant_id=? LIMIT 1",
+        (pid,)
+    ).fetchone()
 
-    questions = [{'id': int(r['id']), 'text': r['text']} for r in rows]
+    if row:
+        return render_template("post_test_completed.html", role="teacher")
 
-    if request.method == 'POST':
+    # خواندن سوالات
+    questions = cur.execute(
+        "SELECT id, text, is_required FROM teacher_post_questions ORDER BY id"
+    ).fetchall()
+
+    if request.method == "POST":
         errors = {}
         answers = {}
 
         for q in questions:
             key = f"q_{q['id']}"
-            val = (request.form.get(key) or "").strip()
-            if not val:
-                errors[q['id']] = "این سؤال الزامی است."
+            val = request.form.get(key)
+
+            if q['is_required'] and (not val or not val.strip()):
+                errors[q['id']] = "این مورد الزامی است."
             else:
                 answers[q['id']] = val
 
         if errors:
             return render_template(
-                "post_test_teacher.html",
+                'post_test_teacher.html',
                 questions=questions,
                 errors=errors,
                 values=request.form
             )
 
-        # ذخیره در DB
-        with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.execute("PRAGMA busy_timeout=30000;")
-            cur = conn.cursor()
-            for qid, txt in answers.items():
-                cur.execute("""
-                    INSERT INTO teacher_post_answers (participant_id, question_id, answer_text)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(participant_id, question_id)
-                    DO UPDATE SET answer_text=excluded.answer_text
-                """, (pid, qid, txt))
-            conn.commit()
+        # ذخیره پاسخ‌ها
+        for qid, text in answers.items():
+            cur.execute("""
+                INSERT INTO teacher_post_answers (participant_id, question_id, answer_text)
+                VALUES (?, ?, ?)
+            """, (pid, qid, text))
+        conn.commit()
+        conn.close()
 
-        session['post_test_teacher_saved'] = True
         return redirect(url_for('thank_you'))
 
-    return render_template(
-        "post_test_teacher.html",
-        questions=questions,
-        errors={},
-        values={}
-    )
+    conn.close()
+    return render_template('post_test_teacher.html', questions=questions, errors={}, values={})
 
 @app.route('/post_test_manager', methods=['GET', 'POST'])
 def post_test_manager():
-    if 'participant_id' not in session:
+    if 'participant_id' not in session or session.get('role') != 'manager':
         return redirect(url_for('index'))
-    if session.get('role') != 'manager':
-        return redirect(url_for('result'))
 
-    pid = int(session['participant_id'])
+    pid = session['participant_id']
 
-    with sqlite3.connect(DATABASE, timeout=30) as conn:
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA busy_timeout=30000;")
-        cur = conn.cursor()
-        rows = cur.execute("""
-            SELECT id, text
-            FROM manager_post_questions
-            WHERE is_active = 1
-            ORDER BY display_order, id
-        """).fetchall()
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
 
-    if not rows:
-        flash("هیچ سؤال پس‌آزمونی برای مدیران تعریف نشده است.", "error")
-        return redirect(url_for('result'))
+    # آیا قبلاً پر کرده؟
+    row = cur.execute(
+        "SELECT 1 FROM manager_post_answers WHERE participant_id=? LIMIT 1",
+        (pid,)
+    ).fetchone()
 
-    questions = [{'id': int(r['id']), 'text': r['text']} for r in rows]
+    if row:
+        return render_template("post_test_completed.html", role="manager")
 
-    if request.method == 'POST':
+    # خواندن سوالات
+    questions = cur.execute(
+        "SELECT id, text, is_required FROM manager_post_questions ORDER BY id"
+    ).fetchall()
+
+    if request.method == "POST":
         errors = {}
         answers = {}
 
         for q in questions:
             key = f"q_{q['id']}"
-            val = (request.form.get(key) or "").strip()
-            if not val:
-                errors[q['id']] = "این سؤال الزامی است."
+            val = request.form.get(key)
+
+            if q['is_required'] and (not val or not val.strip()):
+                errors[q['id']] = "این مورد الزامی است."
             else:
                 answers[q['id']] = val
 
         if errors:
             return render_template(
-                "post_test_manager.html",
+                'post_test_manager.html',
                 questions=questions,
                 errors=errors,
                 values=request.form
             )
 
-        with sqlite3.connect(DATABASE, timeout=30) as conn:
-            conn.execute("PRAGMA busy_timeout=30000;")
-            cur = conn.cursor()
-            for qid, txt in answers.items():
-                cur.execute("""
-                    INSERT INTO manager_post_answers (participant_id, question_id, answer_text)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(participant_id, question_id)
-                    DO UPDATE SET answer_text=excluded.answer_text
-                """, (pid, qid, txt))
-            conn.commit()
+        # ذخیره
+        for qid, text in answers.items():
+            cur.execute("""
+                INSERT INTO manager_post_answers (participant_id, question_id, answer_text)
+                VALUES (?, ?, ?)
+            """, (pid, qid, text))
+        conn.commit()
+        conn.close()
 
-        session['post_test_manager_saved'] = True
         return redirect(url_for('thank_you'))
 
-    return render_template(
-        "post_test_manager.html",
-        questions=questions,
-        errors={},
-        values={}
-    )
+    conn.close()
+    return render_template('post_test_manager.html', questions=questions, errors={}, values={})
 
 
 # ----------------------------- دانلود -----------------------------
