@@ -29,14 +29,44 @@
     .hint{color:var(--muted); font-size:13px}
     .section-title{margin:0 0 10px; font-size:16px}
     .btn{display:inline-block; background:var(--brand); color:#fff; text-decoration:none; padding:10px 14px; border-radius:10px}
+    .btn.secondary{background:#198754}
+    .pill{display:inline-block; padding:3px 10px; border-radius:999px; background:#f1f3f5; color:#333; font-size:12px; border:1px solid #e9ecef;}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1 class="title">نتیجهٔ آزمون تطبیقی</h1>
-      <div class="hint">کاربر: {{ user_name }}</div>
+      <div class="hint">
+        کاربر: {{ user_name }}
+        {% if role %}<span class="pill" style="margin-right:8px;">نقش: {{ role }}</span>{% endif %}
+      </div>
     </div>
+
+    {# ------------------------------------------------------------
+       Fail-safe post-test link selection based on role
+       Even if backend accidentally passes wrong post_test_url
+       ------------------------------------------------------------ #}
+    {% set role_norm = (role|string)|lower if role is defined and role else '' %}
+    {% set computed_post_url = post_test_url %}
+    {% if not computed_post_url %}
+      {% if role_norm == 'learner' %}
+        {% set computed_post_url = url_for('post_test') %}
+      {% elif role_norm == 'teacher' %}
+        {% set computed_post_url = url_for('post_test_teacher') %}
+      {% elif role_norm == 'manager' %}
+        {% set computed_post_url = url_for('post_test_manager') %}
+      {% else %}
+        {% set computed_post_url = None %}
+      {% endif %}
+    {% else %}
+      {# اگر بک‌اند اشتباه لینک داده باشد، اینجا اصلاحش می‌کنیم #}
+      {% if role_norm == 'manager' and ('post_test_teacher' in computed_post_url or '/post_test_teacher' in computed_post_url) %}
+        {% set computed_post_url = url_for('post_test_manager') %}
+      {% elif role_norm == 'teacher' and ('post_test_manager' in computed_post_url or '/post_test_manager' in computed_post_url) %}
+        {% set computed_post_url = url_for('post_test_teacher') %}
+      {% endif %}
+    {% endif %}
 
     <!-- کارت‌های اصلی: خلاصه عددی + تفسیر -->
     <div class="grid">
@@ -108,12 +138,14 @@
         {% endif %}
 
         <div style="margin-top:12px">
-          {% if post_test_url and not post_test_done %}
-            <a class="btn" href="{{ post_test_url }}">تکمیل پرسشنامهٔ تکمیلی</a>
+          {% if computed_post_url and not post_test_done %}
+            <a class="btn" href="{{ computed_post_url }}">تکمیل پرسشنامهٔ تکمیلی</a>
           {% elif post_test_done %}
             <p class="hint">پرسشنامهٔ تکمیلی مربوط به نقش شما قبلاً تکمیل شده است.</p>
+          {% else %}
+            <p class="hint">پرسشنامهٔ تکمیلی برای نقش شما تعریف نشده است.</p>
           {% endif %}
-      </div>
+        </div>
 
       </div>
     </div>
@@ -127,9 +159,9 @@
       </p>
 
       <p class="hint" style="margin-top:4px;">
-        • نمرهٔ برآوردشدهٔ توانایی (θ̂): {{ "%.3f"|format(theta) }}  
+        • نمرهٔ برآوردشدهٔ توانایی (θ̂): {{ "%.3f"|format(theta) }}
         {% if se is not none %}
-        • خطای استاندارد برآورد (SE): {{ "%.3f"|format(se) }}  
+        • خطای استاندارد برآورد (SE): {{ "%.3f"|format(se) }}
         • بازهٔ اطمینان ۹۵٪ برای θ̂: {{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}
         {% else %}
         • به دلیل تعداد کم سؤالات، برآورد دقیق خطای استاندارد امکان‌پذیر نبوده است.

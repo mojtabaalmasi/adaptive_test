@@ -570,85 +570,7 @@ def register():
             return f"خطا: {e}", 500
     return render_template('register.html')
 
-@app.route('/manager_survey')
-def manager_survey():
-    if 'participant_id' not in session:
-        return redirect(url_for('index'))
-    if session.get('role') != 'manager':
-        return redirect(url_for('test'))
 
-    conn = get_db_connection()
-    rows = conn.execute("""
-        SELECT id, text
-        FROM manager_questions
-        WHERE is_active = 1
-        ORDER BY display_order, id
-    """).fetchall()
-    conn.close()
-
-    questions = [{'id': int(r['id']), 'text': r['text']} for r in rows]
-    return render_template('manager_survey.html', questions=questions, user_name=session.get('user_name', ''))
-
-@app.route('/api/voice_answer', methods=['POST'])
-def api_voice_answer():
-    if 'participant_id' not in session:
-        return {'ok': False, 'error': 'unauthorized'}, 401
-
-    participant_id = int(session['participant_id'])
-    if session.get('role') != 'learner':
-        return redirect(url_for('index'))
-
-    role = session.get('role', 'manager')
-    question_id = request.form.get('question_id')
-    duration_ms = request.form.get('duration_ms')
-    f = request.files.get('audio')
-
-    if not question_id or not f:
-        return {'ok': False, 'error': 'missing fields'}, 400
-
-    mime = f.mimetype or 'audio/webm'
-    if mime not in ALLOWED_MIME:
-        return {'ok': False, 'error': f'unsupported mime {mime}'}, 400
-
-    ext = MIME_EXT.get(mime, 'webm')
-    filename = secure_filename(f"{participant_id}_{question_id}_{uuid.uuid4().hex}.{ext}")
-    save_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(participant_id))
-    os.makedirs(save_dir, exist_ok=True)
-    path = os.path.join(save_dir, filename)
-    f.save(path)
-
-    try:
-        size_bytes = os.path.getsize(path)
-    except Exception:
-        size_bytes = None
-
-    rel_path = os.path.relpath(path, start=VOICE_BASE).replace('\\', '/')
-
-
-    with sqlite3.connect(DATABASE, timeout=30) as conn:
-        conn.execute("PRAGMA busy_timeout=30000;")
-        cur = conn.cursor()
-        try:
-            cur.execute("""
-                INSERT INTO voice_answers (participant_id, role, question_id, file_path, mime_type, duration_ms, size_bytes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(participant_id, question_id)
-                DO UPDATE SET file_path=excluded.file_path,
-                              mime_type=excluded.mime_type,
-                              duration_ms=excluded.duration_ms,
-                              size_bytes=excluded.size_bytes,
-                              created_at=CURRENT_TIMESTAMP
-            """, (participant_id, role, int(question_id), rel_path, mime, int(duration_ms) if duration_ms else None, size_bytes))
-        except sqlite3.OperationalError:
-            cur.execute("DELETE FROM voice_answers WHERE participant_id=? AND question_id=?", (participant_id, int(question_id)))
-            cur.execute("""
-                INSERT INTO voice_answers (participant_id, role, question_id, file_path, mime_type, duration_ms, size_bytes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (participant_id, role, int(question_id), rel_path, mime, int(duration_ms) if duration_ms else None, size_bytes))
-        conn.commit()
-
-    url = url_for('serve_voice', filepath=rel_path)
-    return {'ok': True, 'url': url}
 
 # ----------------------------- آزمون تطبیقی -----------------------------
 @app.route('/test', methods=['GET', 'POST'])
@@ -1206,7 +1128,7 @@ def post_test_teacher():
         conn.commit()
         conn.close()
 
-        return redirect(url_for('thank_you'))
+        return redirect(url_for('result'))
 
     conn.close()
     return render_template('post_test_teacher.html', questions=questions, errors={}, values={})
@@ -1283,7 +1205,8 @@ def post_test_manager():
         conn.commit()
         conn.close()
 
-        return redirect(url_for('thank_you'))
+        return redirect(url_for('result'))
+
 
     conn.close()
     return render_template('post_test_manager.html', questions=questions, errors={}, values={})
