@@ -155,102 +155,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS strategies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             strategy TEXT NOT NULL,
-            category TEXT,
-            frequency INTEGER DEFAULT 0,
-            target_role TEXT NOT NULL DEFAULT 'learner'
-        );
-
-
-        -- اطلاعات نقش‌محور مدیر مرکز
-        CREATE TABLE IF NOT EXISTS manager_info (
-            participant_id INTEGER PRIMARY KEY,
-            center_name TEXT,
-            center_city TEXT,
-            center_type TEXT,
-            years_as_manager INTEGER,
-            num_teachers INTEGER,
-            num_learners INTEGER,
-            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE
-        );
-
-        -- پس‌آزمون مدرسان و مدیران (پرسش‌ها)
-        CREATE TABLE IF NOT EXISTS teacher_post_questions (
-            id INTEGER PRIMARY KEY,
-            text TEXT NOT NULL,
-            dimension TEXT,
-            question_type TEXT DEFAULT 'open',
-            scale TEXT,
-            display_order INTEGER NOT NULL DEFAULT 0,
-            is_active INTEGER NOT NULL DEFAULT 1,
-            is_required INTEGER NOT NULL DEFAULT 1
-        );
-
-        CREATE TABLE IF NOT EXISTS manager_post_questions (
-            id INTEGER PRIMARY KEY,
-            text TEXT NOT NULL,
-            dimension TEXT,
-            question_type TEXT DEFAULT 'open',
-            scale TEXT,
-            display_order INTEGER NOT NULL DEFAULT 0,
-            is_active INTEGER NOT NULL DEFAULT 1,
-            is_required INTEGER NOT NULL DEFAULT 1
-        );
-
-        -- پس‌آزمون مدرسان و مدیران (پاسخ‌ها)
-        CREATE TABLE IF NOT EXISTS teacher_post_answers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            participant_id INTEGER NOT NULL,
-            question_id INTEGER NOT NULL,
-            answer_value INTEGER,
-            answer_text TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE,
-            FOREIGN KEY(question_id)   REFERENCES teacher_post_questions(id) ON DELETE CASCADE,
-            UNIQUE(participant_id, question_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS manager_post_answers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            participant_id INTEGER NOT NULL,
-            question_id INTEGER NOT NULL,
-            answer_value INTEGER,
-            answer_text TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE,
-            FOREIGN KEY(question_id)   REFERENCES manager_post_questions(id) ON DELETE CASCADE,
-            UNIQUE(participant_id, question_id)
-        );
-
-        -- لاگ جلسات CAT برای تحلیل‌های پژوهشی
-        CREATE TABLE IF NOT EXISTS test_sessions (
-            session_id TEXT PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            role TEXT,
-            started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            ended_at DATETIME,
-            stop_reason TEXT,
-            items_administered INTEGER DEFAULT 0,
-            theta_start REAL,
-            theta_final REAL,
-            se_final REAL,
-            FOREIGN KEY(user_id) REFERENCES participants(participant_id) ON DELETE CASCADE
-        );
-
-        -- لاگ هر پاسخ در هر گام CAT (اختیاری اما بسیار مفید)
-        CREATE TABLE IF NOT EXISTS answers_meta (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL,
-            participant_id INTEGER NOT NULL,
-            question_id INTEGER NOT NULL,
-            step INTEGER NOT NULL,
-            selected_option INTEGER,
-            is_correct INTEGER,
-            theta_before REAL,
-            theta_after REAL,
-            se_after REAL,
-            info REAL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(session_id) REFERENCES test_sessions(session_id) ON DELETE CASCADE
+            category TEXT
         );
 
         CREATE TABLE IF NOT EXISTS strategy_answers (
@@ -265,31 +170,6 @@ def init_db():
             UNIQUE(participant_id, strategy_id)
         );
         """)
-
-        # ---- مهاجرت سبک (افزودن ستون‌های جدید در صورت وجود جدول‌های قدیمی) ----
-        def _ensure_column(table, col, col_def):
-            cols = [r[1] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
-            if col not in cols:
-                cur.execute(f"ALTER TABLE {table} ADD COLUMN {col_def};")
-
-        # strategies
-        _ensure_column('strategies', 'frequency', 'frequency INTEGER DEFAULT 0')
-        _ensure_column('strategies', 'target_role', "target_role TEXT NOT NULL DEFAULT 'learner'")
-
-        # teacher/manager post questions
-        for t in ('teacher_post_questions', 'manager_post_questions'):
-            _ensure_column(t, 'dimension', 'dimension TEXT')
-            _ensure_column(t, 'question_type', "question_type TEXT DEFAULT 'open'")
-            _ensure_column(t, 'scale', 'scale TEXT')
-            _ensure_column(t, 'display_order', 'display_order INTEGER NOT NULL DEFAULT 0')
-            _ensure_column(t, 'is_active', 'is_active INTEGER NOT NULL DEFAULT 1')
-            _ensure_column(t, 'is_required', 'is_required INTEGER NOT NULL DEFAULT 1')
-
-        # teacher/manager post answers
-        for t in ('teacher_post_answers', 'manager_post_answers'):
-            _ensure_column(t, 'answer_value', 'answer_value INTEGER')
-            _ensure_column(t, 'answer_text', 'answer_text TEXT')
-
         # ایندکس‌های موردنیاز برای UPSERT
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_user_results_user ON user_results(user_id);")
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_voice_answers_user_q ON voice_answers(participant_id, question_id);")
@@ -540,27 +420,13 @@ def register():
                     """, (participant_id, learning_duration, current_level, formal_training,
                           training_institution, samfa_taken, samfa_score, importance_of_academic_persian,
                           speaking_ability, reading_ability, writing_ability, listening_ability))
-                elif role == 'manager':
-                    # اطلاعات نقش‌محور مدیر مرکز (اختیاری؛ اگر در فرم فیلدی موجود نباشد NULL ذخیره می‌شود)
-                    center_name = request.form.get('center_name')
-                    center_city = request.form.get('center_city')
-                    center_type = request.form.get('center_type')
-                    years_as_manager = request.form.get('years_as_manager')
-                    num_teachers = request.form.get('num_teachers')
-                    num_learners = request.form.get('num_learners')
-                    cur.execute("""
-                        INSERT INTO manager_info
-                        (participant_id, center_name, center_city, center_type, years_as_manager, num_teachers, num_learners)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """, (participant_id, center_name, center_city, center_type,
-                          years_as_manager, num_teachers, num_learners))
 
                 conn.commit()
 
             session['participant_id'] = participant_id
             session['user_name'] = name
             session['role'] = role
-            return redirect(url_for('test'))
+            return redirect(url_for('manager_survey' if role == 'manager' else 'test'))
 
         except sqlite3.Error as e:
             print("DB Error:", e)
@@ -595,9 +461,6 @@ def api_voice_answer():
         return {'ok': False, 'error': 'unauthorized'}, 401
 
     participant_id = int(session['participant_id'])
-    if session.get('role') != 'learner':
-        return redirect(url_for('index'))
-
     role = session.get('role', 'manager')
     question_id = request.form.get('question_id')
     duration_ms = request.form.get('duration_ms')
@@ -660,19 +523,6 @@ def test():
     session.setdefault('responses', [])
     session.setdefault('theta', 0.0)
     session.setdefault('stable_streak', 0)
-
-    session.setdefault('test_session_id', None)
-    if not session.get('test_session_id'):
-        session['test_session_id'] = str(uuid.uuid4())
-        # ایجاد رکورد جلسه برای تحلیل پژوهشی
-        with sqlite3.connect(DATABASE, timeout=30) as db:
-            db.execute("PRAGMA busy_timeout=30000;")
-            db.execute(
-                "INSERT OR IGNORE INTO test_sessions (session_id, user_id, role, theta_start) VALUES (?, ?, ?, ?)",
-                (session['test_session_id'], session['participant_id'], session.get('role'), float(session.get('theta', 0.0)))
-            )
-            db.commit()
-
 
     answered = list(map(int, session['answered_questions']))
     responses = list(map(int, session['responses']))
@@ -774,45 +624,6 @@ def test():
                     "INSERT INTO answers (user_id, question_id, selected_option, is_correct) VALUES (?, ?, ?, ?)",
                     (participant_id, current_qid, sel, is_correct)
                 )
-            # ثبت لاگ گام‌به‌گام برای تحلیل (answers_meta)
-            try:
-                cur.execute(
-                    """
-                    INSERT INTO answers_meta
-                    (session_id, participant_id, question_id, step, selected_option, is_correct, theta_before, theta_after, se_after)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        session.get('test_session_id'),
-                        participant_id,
-                        current_qid,
-                        len(responses),
-                        sel,
-                        is_correct,
-                        float(old_theta),
-                        float(theta),
-                        float(se_now) if se_now is not None else None
-                    )
-                )
-            except sqlite3.Error:
-                # اگر جدول answers_meta در DB وجود نداشت یا ساختارش فرق داشت، آزمون مختل نشود
-                pass
-
-            # به‌روزرسانی خلاصه جلسه
-            try:
-                cur.execute(
-                    """
-                    UPDATE test_sessions
-                    SET items_administered = ?,
-                        theta_final = ?,
-                        se_final = ?
-                    WHERE session_id = ?
-                    """,
-                    (len(responses), float(theta), float(se_now) if se_now is not None else None, session.get('test_session_id'))
-                )
-            except sqlite3.Error:
-                pass
-
             db.commit()
 
         if theta_change < DELTA_TARGET:
@@ -846,29 +657,6 @@ def test():
                 cur.execute("UPDATE user_results SET theta=? WHERE user_id=?", (float(theta), participant_id))
                 if cur.rowcount == 0:
                     cur.execute("INSERT INTO user_results (user_id, theta) VALUES (?, ?)", (participant_id, float(theta)))
-                # بستن جلسه آزمون برای تحلیل
-                try:
-                    cur.execute(
-                        """
-                        UPDATE test_sessions
-                        SET ended_at = CURRENT_TIMESTAMP,
-                            stop_reason = ?,
-                            items_administered = ?,
-                            theta_final = ?,
-                            se_final = ?
-                        WHERE session_id = ?
-                        """,
-                        (
-                            stop_reason,
-                            len(responses),
-                            float(theta),
-                            float(se_now) if se_now is not None else None,
-                            session.get('test_session_id')
-                        )
-                    )
-                except sqlite3.Error:
-                    pass
-
                 conn.commit()
 
             session['theta'] = float(theta)
@@ -1156,7 +944,7 @@ def post_test_teacher():
 
     # خواندن سوالات
     questions = cur.execute(
-        "SELECT id, text, COALESCE(question_type,'open') AS question_type, is_required FROM teacher_post_questions WHERE is_active=1 ORDER BY display_order, id"
+        "SELECT id, text, is_required FROM teacher_post_questions ORDER BY id"
     ).fetchall()
 
     if request.method == "POST":
@@ -1166,7 +954,6 @@ def post_test_teacher():
         for q in questions:
             key = f"q_{q['id']}"
             val = request.form.get(key)
-            qtype = (q['question_type'] or 'open').lower()
 
             if q['is_required'] and (not val or not val.strip()):
                 errors[q['id']] = "این مورد الزامی است."
@@ -1182,27 +969,11 @@ def post_test_teacher():
             )
 
         # ذخیره پاسخ‌ها
-        for qid, val in answers.items():
-            q = next((qq for qq in questions if qq['id']==qid), None)
-            qtype = (q['question_type'] if q else 'open')
-            if (qtype or 'open').lower() == 'likert':
-                try:
-                    aval = int(val) if val is not None and str(val).strip()!='' else None
-                except ValueError:
-                    aval = None
-                atext = None
-            else:
-                aval = None
-                atext = val
-
+        for qid, text in answers.items():
             cur.execute("""
-                INSERT INTO teacher_post_answers (participant_id, question_id, answer_value, answer_text)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(participant_id, question_id) DO UPDATE SET
-                    answer_value=excluded.answer_value,
-                    answer_text=excluded.answer_text,
-                    created_at=CURRENT_TIMESTAMP
-            """, (pid, qid, aval, atext))
+                INSERT INTO teacher_post_answers (participant_id, question_id, answer_text)
+                VALUES (?, ?, ?)
+            """, (pid, qid, text))
         conn.commit()
         conn.close()
 
@@ -1233,7 +1004,7 @@ def post_test_manager():
 
     # خواندن سوالات
     questions = cur.execute(
-        "SELECT id, text, COALESCE(question_type,'open') AS question_type, is_required FROM manager_post_questions WHERE is_active=1 ORDER BY display_order, id"
+        "SELECT id, text, is_required FROM manager_post_questions ORDER BY id"
     ).fetchall()
 
     if request.method == "POST":
@@ -1243,7 +1014,6 @@ def post_test_manager():
         for q in questions:
             key = f"q_{q['id']}"
             val = request.form.get(key)
-            qtype = (q['question_type'] or 'open').lower()
 
             if q['is_required'] and (not val or not val.strip()):
                 errors[q['id']] = "این مورد الزامی است."
@@ -1259,27 +1029,11 @@ def post_test_manager():
             )
 
         # ذخیره
-        for qid, val in answers.items():
-            q = next((qq for qq in questions if qq['id']==qid), None)
-            qtype = (q['question_type'] if q else 'open')
-            if (qtype or 'open').lower() == 'likert':
-                try:
-                    aval = int(val) if val is not None and str(val).strip()!='' else None
-                except ValueError:
-                    aval = None
-                atext = None
-            else:
-                aval = None
-                atext = val
-
+        for qid, text in answers.items():
             cur.execute("""
-                INSERT INTO manager_post_answers (participant_id, question_id, answer_value, answer_text)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(participant_id, question_id) DO UPDATE SET
-                    answer_value=excluded.answer_value,
-                    answer_text=excluded.answer_text,
-                    created_at=CURRENT_TIMESTAMP
-            """, (pid, qid, aval, atext))
+                INSERT INTO manager_post_answers (participant_id, question_id, answer_text)
+                VALUES (?, ?, ?)
+            """, (pid, qid, text))
         conn.commit()
         conn.close()
 
