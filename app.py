@@ -613,7 +613,17 @@ def attitude(mode):
 
         flash("پاسخ‌های نگرش ثبت شد.", "success")
         session["pending_pkrq"] = False
-        return redirect(url_for("post_test"))
+        role = session.get("role", "learner")
+
+        # بعد از PKRQ، مسیر را بر اساس نقش انتخاب کن
+        if role == "learner":
+            return redirect(url_for("post_test"))
+        elif role == "teacher":
+            return redirect(url_for("post_test_teacher"))
+        elif role == "manager":
+            return redirect(url_for("post_test_manager"))
+        else:
+            return redirect(url_for("result"))
 
     return render_template("pkrq.html", items=items, mode=mode)
 
@@ -1053,6 +1063,10 @@ def test():
 # ----------------------------- پس‌آزمون راهبردها (learner) -----------------------------
 @app.route("/post_test", methods=["GET", "POST"])
 def post_test():
+        # فقط learner مجاز است پرسشنامه راهبردها را ببیند
+    if session.get("role") != "learner":
+        return redirect(url_for("result"))  # یا می‌خواهی 403 بدهی
+
     if not session.get("pending_post_test"):
         return redirect(url_for("result"))
 
@@ -1367,6 +1381,8 @@ def post_test_teacher():
                 )
 
             conn.commit()
+            session["pending_post_test"] = False
+
             return redirect(url_for("result"))
 
     return render_template("post_test_teacher.html", questions=questions, errors={}, values={})
@@ -1446,6 +1462,8 @@ def post_test_manager():
                 )
 
             conn.commit()
+            session["pending_post_test"] = False
+
             return redirect(url_for("result"))
 
     return render_template("post_test_manager.html", questions=questions, errors={}, values={})
