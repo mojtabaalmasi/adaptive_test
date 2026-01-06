@@ -14,10 +14,12 @@ from werkzeug.utils import secure_filename
 import os, shutil
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-os.makedirs(STATIC_DIR, exist_ok=True)
-
 DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
+
+PLOTS_DIR = os.path.join(DATA_DIR, "plots")
+os.makedirs(PLOTS_DIR, exist_ok=True)
+
+
 DATABASE = os.environ.get("DATABASE_PATH", os.path.join(DATA_DIR, "questions.db"))
 
 SEED_DB = os.path.join(BASE_DIR, "questions.db")  # دیتابیس داخل repo
@@ -446,37 +448,69 @@ def select_next_question(theta, all_item_params, answered_indices):
 
 # ----------------------------- نمودار -----------------------------
 def plot_icc(item_params, save_path):
+    import os
+    import numpy as np
+    import matplotlib
+    matplotlib.use("Agg")  # الزامی برای محیط سرور (headless)
+    import matplotlib.pyplot as plt
+
+    # اطمینان از وجود پوشه مقصد (برای /var/data/plots و ...)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
     theta_range = np.linspace(THETA_MIN, THETA_MAX, 200)
+
     plt.figure(figsize=(10, 6))
+
     for i, (a, b, c) in enumerate(item_params):
         probs = [three_pl_probability(t, a, b, c) for t in theta_range]
-        plt.plot(theta_range, probs, label=f"سوال {i+1}")
+        plt.plot(theta_range, probs, label=f"سؤال {i+1}")
+
     plt.xlabel("θ (توانایی)")
     plt.ylabel("احتمال پاسخ صحیح")
-    plt.title("تابع مشخصه سوالات (ICC)")
+    plt.title("تابع مشخصه سؤال‌ها (ICC)")
     plt.legend(fontsize=8, ncol=2)
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(save_path)
-    plt.close()
+
+    # ذخیره روی مسیر absolute (مثلاً /var/data/plots/...)
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close()  # جلوگیری از نشت حافظه
+
     return save_path
 
+
 def plot_item_information(item_params, save_path):
+    import os
+    import numpy as np
+    import matplotlib
+    matplotlib.use("Agg")  # الزامی برای محیط سرور (headless)
+    import matplotlib.pyplot as plt
+
+    # اطمینان از وجود پوشه مقصد (برای /var/data/plots و ...)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
     theta_range = np.linspace(THETA_MIN, THETA_MAX, 200)
     total_info = np.zeros_like(theta_range, dtype=float)
+
     for a, b, c in item_params:
         info = np.array([item_information(t, a, b, c) for t in theta_range], dtype=float)
         total_info += info
+
     plt.figure(figsize=(8, 5))
     plt.plot(theta_range, total_info)
+
     plt.xlabel("θ (توانایی)")
     plt.ylabel("اطلاعات آزمون")
     plt.title("تابع اطلاعات کل آزمون")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(save_path)
-    plt.close()
+
+    # ذخیره روی مسیر absolute (مثلاً /var/data/plots/...)
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close()  # جلوگیری از نشت حافظه
+
     return save_path
+
 
 # ----------------------------- خروجی به Excel/Word -----------------------------
 def save_results_to_excel(filepath, responses, answered_indices, theta):
@@ -1118,18 +1152,35 @@ def result():
     answered = list(map(int, session["answered_questions"]))
     theta = float(session.get("theta", 0.0))
 
+    # پارامترهای آیتم‌ها
     rows = get_all_item_params()
-    all_item_params = [tuple(r[1:]) for r in rows]
+    all_item_params = [tuple(r[1:]) for r in rows]  # (a,b,c) برای هر آیتم
     answered_params = [all_item_params[i] for i in answered] if answered else []
 
-    icc_path = plot_icc(answered_params, f"static/icc_{uuid.uuid4().hex}.png") if answered_params else None
-    info_path = plot_item_information(answered_params, f"static/info_{uuid.uuid4().hex}.png") if answered_params else None
+    # --- نمودارها: ذخیره روی Disk و تولید URL ---
+    icc_url = None
+    info_url = None
 
+    if answered_params:
+        # ICC
+        icc_filename = f"icc_{uuid.uuid4().hex}.png"
+        icc_abspath = os.path.join(PLOTS_DIR, icc_filename)      # مسیر فیزیکی روی Disk
+        plot_icc(answered_params, icc_abspath)                   # ذخیره فایل
+        icc_url = url_for("serve_plot", filename=icc_filename)   # URL قابل نمایش
+
+        # Test Information
+        info_filename = f"info_{uuid.uuid4().hex}.png"
+        info_abspath = os.path.join(PLOTS_DIR, info_filename)    # مسیر فیزیکی روی Disk
+        plot_item_information(answered_params, info_abspath)      # ذخیره فایل
+        info_url = url_for("serve_plot", filename=info_filename) # URL قابل نمایش
+
+    # --- آمار پاسخ‌ها ---
     n_total = len(responses)
     n_correct = sum(1 for r in responses if r == 1)
     n_wrong = n_total - n_correct
     accuracy = round((n_correct / n_total) * 100, 1) if n_total else 0
 
+    # --- SE و بازه‌های اطمینان ---
     if answered_params:
         se = theta_se(theta, answered_params)
         ci68 = (max(-4, theta - se), min(4, theta + se))
@@ -1138,12 +1189,17 @@ def result():
         se, ci68, ci95 = None, None, None
 
     def ability_band(t):
-        if t < -2: return "خیلی پایین"
-        if t < -1: return "پایین"
-        if t <= 1: return "متوسط"
-        if t <= 2: return "بالا"
+        if t < -2:
+            return "خیلی پایین"
+        if t < -1:
+            return "پایین"
+        if t <= 1:
+            return "متوسط"
+        if t <= 2:
+            return "بالا"
         return "خیلی بالا"
 
+    # --- لینک پرسشنامه تکمیلی بر اساس نقش ---
     role = session.get("role", "learner")
     pid = int(session["participant_id"])
     post_test_url = None
@@ -1156,14 +1212,33 @@ def result():
 
         if role == "learner":
             post_test_url = url_for("post_test")
-            post_test_done = cur.execute("SELECT 1 FROM strategy_answers WHERE participant_id=? LIMIT 1", (pid,)).fetchone() is not None
+            post_test_done = (
+                cur.execute(
+                    "SELECT 1 FROM strategy_answers WHERE participant_id=? LIMIT 1",
+                    (pid,),
+                ).fetchone()
+                is not None
+            )
         elif role == "teacher":
             post_test_url = url_for("post_test_teacher")
-            post_test_done = cur.execute("SELECT 1 FROM teacher_post_answers WHERE participant_id=? LIMIT 1", (pid,)).fetchone() is not None
+            post_test_done = (
+                cur.execute(
+                    "SELECT 1 FROM teacher_post_answers WHERE participant_id=? LIMIT 1",
+                    (pid,),
+                ).fetchone()
+                is not None
+            )
         elif role == "manager":
             post_test_url = url_for("post_test_manager")
-            post_test_done = cur.execute("SELECT 1 FROM manager_post_answers WHERE participant_id=? LIMIT 1", (pid,)).fetchone() is not None
+            post_test_done = (
+                cur.execute(
+                    "SELECT 1 FROM manager_post_answers WHERE participant_id=? LIMIT 1",
+                    (pid,),
+                ).fetchone()
+                is not None
+            )
 
+    # --- رندر ---
     return render_template(
         "result.html",
         theta=theta,
@@ -1176,14 +1251,14 @@ def result():
         n_wrong=n_wrong,
         accuracy=accuracy,
         user_name=session.get("user_name", "کاربر ناشناس"),
-        icc_image=icc_path,
-        info_image=info_path,
-        interpretation="—",
-        has_post_test=post_test_done,
         role=role,
         post_test_url=post_test_url,
         post_test_done=post_test_done,
+        interpretation="—",
+        icc_url=icc_url,
+        info_url=info_url,
     )
+
 
 # ----------------------------- پس‌آزمون مدرس -----------------------------
 @app.route("/post_test_teacher", methods=["GET", "POST"])
@@ -1258,6 +1333,11 @@ def post_test_teacher():
             return redirect(url_for("result"))
 
     return render_template("post_test_teacher.html", questions=questions, errors={}, values={})
+
+@app.route("/plots/<filename>")
+def serve_plot(filename):
+    return send_from_directory(PLOTS_DIR, filename)
+
 
 # ----------------------------- پس‌آزمون مدیر -----------------------------
 @app.route("/post_test_manager", methods=["GET", "POST"])
