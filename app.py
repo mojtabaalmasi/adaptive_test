@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
 BASE_DIR = os.path.dirname(__file__)
-DATABASE = os.environ.get("DATABASE_PATH", os.path.join(BASE_DIR, "questions.db"))
+DB_PATH = "/var/data/questions.db"
 
 # ----------------------------- DB helpers -----------------------------
 def get_db_connection():
