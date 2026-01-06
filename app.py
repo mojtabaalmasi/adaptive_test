@@ -14,6 +14,8 @@ from werkzeug.utils import secure_filename
 import os, shutil
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+os.makedirs(STATIC_DIR, exist_ok=True)
 
 DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
 DATABASE = os.environ.get("DATABASE_PATH", os.path.join(DATA_DIR, "questions.db"))
