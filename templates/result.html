@@ -184,10 +184,10 @@
 
     <!-- نمودارها -->
     <div class="grid" style="margin-top:16px">
-      {% if icc_image %}
+      {% if icc_url %}
       <div class="card img-wrap">
         <div class="section-title">منحنی‌های ICC آیتم‌های پاسخ‌داده‌شده</div>
-        <img src="{{ url_for('static', filename=icc_image.split('static/')[1]) if 'static/' in icc_image else icc_image }}" alt="ICC">
+        <img src="{{ icc_url }}" alt="ICC">
         <p class="hint" style="margin-top:8px;">
           هر منحنی نشان می‌دهد احتمال پاسخ صحیح به هر سؤال، در سطوح مختلف توانایی (θ) چگونه تغییر می‌کند.
           هرچه منحنی یک سؤال در محدودهٔ θ شما شیب تندتری داشته باشد، آن سؤال برای سنجش دقیق‌تر شما مفیدتر بوده است.
@@ -195,10 +195,10 @@
       </div>
       {% endif %}
 
-      {% if info_image %}
+      {% if info_url %}
       <div class="card img-wrap">
         <div class="section-title">تابع اطلاعات کل آزمون</div>
-        <img src="{{ url_for('static', filename=info_image.split('static/')[1]) if 'static/' in info_image else info_image }}" alt="Info">
+        <img src="{{ info_url }}" alt="Info">
         <p class="hint" style="margin-top:8px;">
           این نمودار نشان می‌دهد آزمون در کدام نواحی θ بیشترین دقت را دارد.
           هرچه منحنی بالاتر باشد، آزمون در آن سطح توانایی، اطلاعات بیشتری فراهم می‌کند
