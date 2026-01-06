@@ -352,7 +352,7 @@
                         
                         <div class="form-group">
                             <label>دانشگاه یا مؤسسه‌های تدریس:</label>
-                            <input type="text" name="teaching_institutions">
+                            <input type="text" name="institution">
                         </div>
                         
                         <div class="form-group">
@@ -487,6 +487,53 @@
                         <textarea name="importance_of_academic_persian" rows="3"></textarea>
                     </div>
                 </div>
+                <!-- بخش مدیر مرکز -->
+                <div id="manager_fields" class="hidden role-section">
+                    <h3><i class="fas fa-building"></i> اطلاعات مرکز آموزش زبان فارسی</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                        <label class="required">نام مرکز:</label>
+                        <input type="text" name="center_name" placeholder="مثلاً: مرکز آموزش زبان فارسی ..." required>
+                        </div>
+
+                        <div class="form-group">
+                        <label class="required">شهر/محل مرکز:</label>
+                        <input type="text" name="center_city" placeholder="مثلاً: تهران" required>
+                        </div>
+
+                        <div class="form-group">
+                        <label class="required">نوع مرکز:</label>
+                        <select name="center_type" required>
+                            <option value="">انتخاب کنید</option>
+                            <option value="دانشگاه">دانشگاه</option>
+                            <option value="موسسه خصوصی">مؤسسه خصوصی</option>
+                            <option value="وابسته به سازمان/نهاد">وابسته به سازمان/نهاد</option>
+                            <option value="سایر">سایر</option>
+                        </select>
+                        </div>
+
+                        <div class="form-group">
+                        <label class="required">سابقه مدیریت (سال):</label>
+                        <input type="number" name="years_as_manager" min="0" max="60" required>
+                        </div>
+
+                        <div class="form-group">
+                        <label>تعداد مدرسان مرکز:</label>
+                        <input type="number" name="num_teachers" min="0" max="500">
+                        </div>
+
+                        <div class="form-group">
+                        <label>تعداد فارسی‌آموزان فعال:</label>
+                        <input type="number" name="num_learners" min="0" max="50000">
+                        </div>
+                    </div>
+
+                    <p style="margin-top:10px;color:#516070;font-size:0.95rem;">
+                        این اطلاعات صرفاً برای توصیف نمونه خبرگان و تحلیل پژوهشی استفاده می‌شود.
+                    </p>
+                </div>
+
             </div>
             
             <button type="submit">
@@ -501,21 +548,36 @@
 </div>
 
 <script>
-    function toggleRoleFields() {
-        var role = document.getElementById("role").value;
-        document.getElementById("teacher_fields").classList.add("hidden");
-        document.getElementById("learner_fields").classList.add("hidden");
-        if (role === "teacher") {
-            document.getElementById("teacher_fields").classList.remove("hidden");
-        } else if (role === "learner") {
-            document.getElementById("learner_fields").classList.remove("hidden");
-        }
-    }
-    
-    // Initialize form based on any pre-selected role
-    document.addEventListener('DOMContentLoaded', function() {
-        toggleRoleFields();
+  function setSectionEnabled(sectionId, enabled) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+
+    // نمایش/عدم نمایش
+    section.classList.toggle("hidden", !enabled);
+
+    // غیرفعال/فعال کردن فیلدها برای جلوگیری از validation و ارسال ناخواسته
+    section.querySelectorAll("input, select, textarea").forEach(el => {
+      if (enabled) {
+        el.disabled = false;
+      } else {
+        el.disabled = true;
+      }
     });
+  }
+
+  function toggleRoleFields() {
+    const role = document.getElementById("role").value;
+
+    setSectionEnabled("teacher_fields", role === "teacher");
+    setSectionEnabled("learner_fields", role === "learner");
+    setSectionEnabled("manager_fields", role === "manager");
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    toggleRoleFields();
+  });
 </script>
+
+
 </body>
 </html>
