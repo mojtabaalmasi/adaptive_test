@@ -15,6 +15,7 @@ import os, shutil
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
+VOICE_BASE = os.environ.get("VOICE_PATH", os.path.join(DATA_DIR, "voices"))
 
 PLOTS_DIR = os.path.join(DATA_DIR, "plots")
 os.makedirs(PLOTS_DIR, exist_ok=True)
@@ -37,10 +38,6 @@ if (not os.path.exists(DATABASE)) or os.path.getsize(DATABASE) == 0:
 # ----------------------------- پیکربندی پایه -----------------------------
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
-
-
-DATABASE = "/var/data/questions.db"
-sqlite3.connect(DATABASE)
 
 # ----------------------------- DB helpers -----------------------------
 def get_db_connection():
@@ -71,8 +68,9 @@ def pick_text_column(table_name: str) -> str:
     raise RuntimeError(f"Neither 'text' nor 'question_text' exists in table '{table_name}'. Columns={cols}")
 
 # ----------------------------- Upload (Voice) -----------------------------
-VOICE_BASE = os.environ.get("VOICE_PATH", os.path.join(BASE_DIR, "voices"))
+VOICE_BASE = os.environ.get("VOICE_PATH", os.path.join(DATA_DIR, "voices"))
 os.makedirs(VOICE_BASE, exist_ok=True)
+
 
 app.config["UPLOAD_FOLDER"] = VOICE_BASE
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024  # 15MB
