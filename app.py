@@ -16,8 +16,8 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
-BASE_DIR = os.path.dirname(__file__)
-DB_PATH = "/var/data/questions.db"
+
+DATABASE = "/var/data/questions.db"
 
 # ----------------------------- DB helpers -----------------------------
 def get_db_connection():
