@@ -18,7 +18,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
 
 DATABASE = "/var/data/questions.db"
-sqlite3.connect(DB_PATH)
+sqlite3.connect(DATABASE)
 
 # ----------------------------- DB helpers -----------------------------
 def get_db_connection():
