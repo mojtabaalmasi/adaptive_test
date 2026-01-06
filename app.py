@@ -1134,6 +1134,45 @@ def post_test():
         return redirect(url_for("result"))
 
     return render_template("strategies_survey.html", groups=groups, errors={}, values={})
+import os
+import zipfile
+import tempfile
+from flask import send_file, abort, request
+
+EXPORT_TOKEN = os.environ.get("EXPORT_TOKEN")  # یک توکن ساده برای امنیت
+
+@app.route("/admin/export-data")
+def export_data():
+    # امنیت خیلی ساده: فقط اگر توکن درست بود خروجی بده
+    if not EXPORT_TOKEN:
+        abort(404)
+    if request.args.get("token") != EXPORT_TOKEN:
+        abort(403)
+
+    db_path = os.environ.get("DATABASE_PATH", "/var/data/questions.db")
+    voices_dir = os.environ.get("VOICE_PATH", "/var/data/voices")
+
+    if not os.path.exists(db_path):
+        return f"DB not found: {db_path}", 404
+
+    # ساخت zip موقت
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+    tmp_path = tmp.name
+    tmp.close()
+
+    with zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        # دیتابیس
+        z.write(db_path, arcname="questions.db")
+
+        # ویس‌ها (اگر وجود داشت)
+        if os.path.isdir(voices_dir):
+            for root, _, files in os.walk(voices_dir):
+                for fn in files:
+                    full = os.path.join(root, fn)
+                    rel = os.path.relpath(full, voices_dir)
+                    z.write(full, arcname=os.path.join("voices", rel))
+
+    return send_file(tmp_path, as_attachment=True, download_name="render_data_export.zip")
 
 # ----------------------------- قدردانی -----------------------------
 @app.route("/thank_you")
