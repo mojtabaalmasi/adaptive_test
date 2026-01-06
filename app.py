@@ -11,6 +11,23 @@ import matplotlib.pyplot as plt
 import os
 import uuid
 from werkzeug.utils import secure_filename
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
+
+DATABASE = os.environ.get(
+    "DATABASE_PATH",
+    os.path.join(DATA_DIR, "questions.db")
+)
+
+VOICE_BASE = os.environ.get(
+    "VOICE_PATH",
+    os.path.join(DATA_DIR, "voices")
+)
+
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(VOICE_BASE, exist_ok=True)
+
 
 # ----------------------------- پیکربندی پایه -----------------------------
 app = Flask(__name__)
