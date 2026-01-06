@@ -11,18 +11,24 @@ import matplotlib.pyplot as plt
 import os
 import uuid
 from werkzeug.utils import secure_filename
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
-DATABASE = os.environ.get("DATABASE_PATH",os.path.join(DATA_DIR, "questions.db"))
+import os, shutil
 
-VOICE_BASE = os.environ.get(
-    "VOICE_PATH",
-    os.path.join(DATA_DIR, "voices")
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
+DATABASE = os.environ.get("DATABASE_PATH", os.path.join(DATA_DIR, "questions.db"))
+
+SEED_DB = os.path.join(BASE_DIR, "questions.db")  # دیتابیس داخل repo
 
 os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(VOICE_BASE, exist_ok=True)
 
+# اگر دیتابیس روی Disk نیست (یا صفر بایت است)، از seed کپی کن
+if (not os.path.exists(DATABASE)) or os.path.getsize(DATABASE) == 0:
+    if os.path.exists(SEED_DB):
+        shutil.copyfile(SEED_DB, DATABASE)
+        print("Seed DB copied to Disk:", DATABASE)
+    else:
+        print("WARNING: Seed DB not found at:", SEED_DB)
 
 # ----------------------------- پیکربندی پایه -----------------------------
 app = Flask(__name__)
