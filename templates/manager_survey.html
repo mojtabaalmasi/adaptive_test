@@ -1,4 +1,4 @@
-<!-- templates/manager_survey.html -->
+<!-- templates/manager_survey.html (FIXED) -->
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -6,16 +6,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>پرسشنامه مدیر مرکز | آزمون تطبیقی</title>
 
-  <!-- Bootstrap 5 (RTL) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" integrity="sha384-..." crossorigin="anonymous">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- فونت اصلی (هم‌راستا با صفحات دیگر) -->
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Design System شبیه register.html */
     *{ box-sizing:border-box; }
     body{
       font-family:'Vazirmatn','Vazir',Tahoma,sans-serif;
@@ -28,7 +23,6 @@
       justify-content:center;
       align-items:flex-start;
     }
-
     .app-shell{
       width:100%;
       max-width: 980px;
@@ -38,7 +32,6 @@
       box-shadow:0 15px 50px rgba(0,0,0,.2);
       animation: fadeIn .8s ease;
     }
-
     .app-header{
       background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
       color:#fff;
@@ -56,7 +49,6 @@
       background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
       transform: rotate(30deg);
     }
-
     .app-header-inner{
       position:relative;
       z-index:1;
@@ -66,7 +58,6 @@
       gap:12px;
       justify-content:space-between;
     }
-
     .brand{
       display:flex;
       align-items:center;
@@ -77,9 +68,7 @@
       text-decoration:none;
       white-space:nowrap;
     }
-
     .brand i{ opacity:.95; }
-
     .user-pill{
       display:flex;
       align-items:center;
@@ -91,12 +80,10 @@
       font-size:.95rem;
       white-space:nowrap;
     }
-
     .content{
       padding: 22px 24px 0;
       background:#fff;
     }
-
     .page-title{
       color:#1a2980;
       font-weight:700;
@@ -106,14 +93,12 @@
       align-items:center;
       gap:10px;
     }
-
     .page-subtitle{
       color:#516070;
       line-height:1.9;
       margin:0 0 14px;
       font-size:1rem;
     }
-
     .hint{
       background:#f0f7ff;
       border-radius:15px;
@@ -127,8 +112,6 @@
       margin-bottom: 16px;
     }
     .hint i{ color:#3498db; margin-top:2px; }
-
-    /* کارت سؤال‌ها */
     .q-card{
       border: 1px solid #e0e6ed !important;
       border-radius: 16px !important;
@@ -140,27 +123,22 @@
       box-shadow: 0 14px 30px rgba(0,0,0,.10) !important;
       border-color:#cfe2ff !important;
     }
-
     .q-meta{
       color:#7f8c8d;
       font-size:.9rem;
       margin-bottom:6px;
     }
-
     .q-text{
       color:#2c3e50;
       font-weight:600;
       line-height:1.9;
       margin: 0 0 12px;
     }
-
     .status-badge{
       font-size:.85rem;
       padding:.45rem .65rem;
       border-radius:999px;
     }
-
-    /* دکمه‌ها: primary گرادیانی */
     .btn-grad{
       background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%) !important;
       border: none !important;
@@ -173,7 +151,6 @@
       transform: translateY(-2px);
       box-shadow: 0 7px 20px rgba(26,41,128,.30);
     }
-
     .btn-soft{
       background:#f8fafc !important;
       border: 2px solid #e0e6ed !important;
@@ -186,7 +163,6 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.08);
       border-color:#cfe2ff !important;
     }
-
     .btn-danger-soft{
       background:#fff5f5 !important;
       border: 2px solid #ffd6d6 !important;
@@ -199,10 +175,7 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.08);
       border-color:#ffb3b3 !important;
     }
-
     .btn-wide{ min-width: 200px; }
-
-    /* ضبط */
     .rec-dot{
       display:inline-block;
       width:8px;height:8px;border-radius:50%;
@@ -212,8 +185,6 @@
       animation: blink 1s infinite;
     }
     @keyframes blink{ 50%{ opacity: .2; } }
-
-    /* فوتر چسبنده */
     .sticky-footer{
       position: sticky;
       bottom: 0;
@@ -222,18 +193,15 @@
       padding: 14px 16px;
       margin-top: 16px;
     }
-
     .footer-note{
       color:#7f8c8d;
       font-size:.9rem;
       line-height:1.9;
     }
-
     @keyframes fadeIn{
       from{opacity:0; transform: translateY(20px);}
       to{opacity:1; transform: translateY(0);}
     }
-
     @media (max-width: 768px){
       body{ padding: 10px; }
       .app-shell{ border-radius: 15px; }
@@ -246,15 +214,12 @@
 
 <body>
   <div class="app-shell">
-
-    <!-- هدر (جایگزین navbar بوت‌استرپ برای هماهنگی ظاهری) -->
     <header class="app-header">
       <div class="app-header-inner">
         <a class="brand" href="{{ url_for('index') }}">
           <i class="bi bi-diagram-3-fill"></i>
           آزمون تطبیقی IRT
         </a>
-
         <div class="user-pill">
           <i class="bi bi-person-badge"></i>
           مدیر: {{ user_name or '---' }}
@@ -309,6 +274,12 @@
                     ارسال پاسخ صوتی
                   </button>
 
+                  <!-- اضافه شد: دانلود دقیق همان blob -->
+                  <a class="btn btn-soft btn-sm d-none" data-download href="#" download>
+                    <i class="bi bi-download me-1"></i>
+                    دانلود فایل ضبط‌شده
+                  </a>
+
                   <span class="text-danger small d-none" data-rec-indicator>
                     <span class="rec-dot"></span>در حال ضبط…
                   </span>
@@ -323,7 +294,6 @@
                   <div class="small text-muted" data-msg>—</div>
                 </div>
 
-                <!-- نگهدارنده شناسه سؤال -->
                 <input type="hidden" value="{{ q.id }}" data-qid>
               </div>
             </div>
@@ -349,180 +319,261 @@
     </main>
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
 
-  <!-- اسکریپت ضبط و آپلود (بدون تغییر) -->
   <script>
-  let sharedStream = null;
+    // --- Shared stream ---
+    let sharedStream = null;
 
-  async function getStream() {
-    if (!sharedStream) {
-      sharedStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-    }
-    return sharedStream;
-  }
-
-  function pickMimeType() {
-    const candidates = [
-      "audio/webm;codecs=opus",
-      "audio/webm",
-      "audio/ogg;codecs=opus",
-      "audio/ogg",
-      "audio/mp4" // بعضی مرورگرها
-    ];
-    for (const t of candidates) {
-      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
-        return t;
+    async function getStream() {
+      // Secure context check (helps explain silent failures)
+      if (!window.isSecureContext) {
+        throw new Error("برای ضبط باید صفحه روی HTTPS یا localhost باشد.");
       }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("این مرورگر getUserMedia را پشتیبانی نمی‌کند.");
+      }
+      if (typeof MediaRecorder === "undefined") {
+        throw new Error("این مرورگر MediaRecorder را پشتیبانی نمی‌کند (روی برخی نسخه‌های Safari/iOS رایج است).");
+      }
+
+      if (!sharedStream) {
+        sharedStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+      }
+      return sharedStream;
     }
-    return ""; // بگذار مرورگر خودش انتخاب کند
-  }
 
-  function extFromMime(mime) {
-    mime = (mime || "").toLowerCase();
-    if (mime.includes("ogg")) return "ogg";
-    if (mime.includes("mp4")) return "m4a";
-    if (mime.includes("mpeg")) return "mp3";
-    return "webm";
-  }
+    function pickMimeType() {
+      const candidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+        "audio/mp4"
+      ];
+      for (const t of candidates) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+      }
+      return "";
+    }
 
-  document.querySelectorAll('[data-qid]').forEach((holder) => {
-    const cardBody = holder.closest('.card-body');
+    function extFromMime(mime) {
+      mime = (mime || "").toLowerCase();
+      if (mime.includes("ogg")) return "ogg";
+      if (mime.includes("mp4")) return "m4a";
+      if (mime.includes("mpeg")) return "mp3";
+      return "webm";
+    }
 
-    const qid = holder.value;
-    const btnStart = cardBody.querySelector('[data-start]');
-    const btnStop = cardBody.querySelector('[data-stop]');
-    const btnUpload = cardBody.querySelector('[data-upload]');
-    const player = cardBody.querySelector('[data-player]');
-    const msg = cardBody.querySelector('[data-msg]');
-    const statusBadge = cardBody.querySelector('[data-status]');
-    const recIndicator = cardBody.querySelector('[data-rec-indicator]');
-    const durEl = cardBody.querySelector('[data-duration]');
+    function safeRevokeUrl(url) {
+      try { if (url) URL.revokeObjectURL(url); } catch (_) {}
+    }
 
-    let recorder = null;
-    let chunks = [];
-    let blob = null;
-    let startTs = null;
+    document.querySelectorAll('[data-qid]').forEach((holder) => {
+      const cardBody = holder.closest('.card-body');
 
-    btnStart.addEventListener('click', async () => {
-      try {
-        const stream = await getStream();
+      const qid = holder.value;
+      const btnStart = cardBody.querySelector('[data-start]');
+      const btnStop = cardBody.querySelector('[data-stop]');
+      const btnUpload = cardBody.querySelector('[data-upload]');
+      const btnDownload = cardBody.querySelector('[data-download]');
+      const player = cardBody.querySelector('[data-player]');
+      const msg = cardBody.querySelector('[data-msg]');
+      const statusBadge = cardBody.querySelector('[data-status]');
+      const recIndicator = cardBody.querySelector('[data-rec-indicator]');
+      const durEl = cardBody.querySelector('[data-duration]');
+
+      let recorder = null;
+      let chunks = [];
+      let blob = null;
+      let startTs = null;
+      let objectUrl = null;
+      let lastMime = null;
+
+      function resetUI() {
+        btnStop.disabled = true;
+        btnUpload.disabled = true;
+        btnStart.disabled = false;
+
+        recIndicator.classList.add('d-none');
+        durEl.textContent = '';
+        msg.textContent = '—';
+
+        statusBadge.className = 'badge bg-secondary status-badge';
+        statusBadge.textContent = 'ضبط نشده';
+
+        player.classList.add('d-none');
+        player.removeAttribute('src');
+        player.load();
+
+        btnDownload.classList.add('d-none');
+        btnDownload.href = '#';
+        btnDownload.removeAttribute('download');
+
+        safeRevokeUrl(objectUrl);
+        objectUrl = null;
+
         chunks = [];
         blob = null;
-        startTs = Date.now();
+        startTs = null;
+        lastMime = null;
+        recorder = null;
+      }
 
-        const mt = pickMimeType();
-        recorder = mt ? new MediaRecorder(stream, { mimeType: mt }) : new MediaRecorder(stream);
+      // شروع: UI اولیه
+      resetUI();
 
-        recorder.ondataavailable = (e) => {
-          if (e.data && e.data.size) chunks.push(e.data);
-        };
+      btnStart.addEventListener('click', async () => {
+        try {
+          // reset playback/download from prior attempt
+          safeRevokeUrl(objectUrl);
+          objectUrl = null;
+          player.classList.add('d-none');
+          btnDownload.classList.add('d-none');
 
-        recorder.onstop = () => {
-          const durMs = Date.now() - startTs;
+          const stream = await getStream();
 
-          // مهم: type واقعی را از خود chunk/recorder بگیر
-          const realType =
-            (recorder && recorder.mimeType) ||
-            (chunks[0] && chunks[0].type) ||
-            "audio/webm";
+          chunks = [];
+          blob = null;
+          startTs = Date.now();
 
-          blob = new Blob(chunks, { type: realType });
+          const mt = pickMimeType();
+          recorder = mt ? new MediaRecorder(stream, { mimeType: mt }) : new MediaRecorder(stream);
 
-          // تست سریع: اگر blob خیلی کوچک است یعنی عملاً چیزی ضبط نشده
-          if (!blob || blob.size < 1000) {
-            msg.textContent = "فایل خروجی بسیار کوچک است؛ احتمالاً میکروفون صدایی ارسال نکرده یا مرورگر خروجی بی‌صدا داده است.";
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size) chunks.push(e.data);
+          };
+
+          recorder.onerror = (e) => {
+            console.error("MediaRecorder error:", e);
+            msg.textContent = "خطا در ضبط. لطفاً مرورگر را تغییر دهید یا مجوز میکروفون را بررسی کنید.";
             statusBadge.className = 'badge bg-danger status-badge';
             statusBadge.textContent = 'خطا';
-            btnUpload.disabled = true;
-            return;
-          }
+            recIndicator.classList.add('d-none');
+            btnStop.disabled = true;
+            btnStart.disabled = false;
+          };
 
-          const url = URL.createObjectURL(blob);
-          player.src = url;
-          player.classList.remove('d-none');
-          player.load();
+          recorder.onstop = () => {
+            const durMs = Date.now() - startTs;
 
-          durEl.textContent = durMs ? `~ ${(durMs/1000).toFixed(1)} ثانیه` : '';
-          btnUpload.disabled = false;
+            const realType =
+              (recorder && recorder.mimeType) ||
+              (chunks[0] && chunks[0].type) ||
+              "audio/webm";
 
-          statusBadge.className = 'badge bg-warning text-dark status-badge';
-          statusBadge.textContent = 'آماده ارسال';
-          recIndicator.classList.add('d-none');
-          msg.textContent = `فایل آماده‌ی ارسال است. (type=${realType}, size=${blob.size} bytes)`;
-        };
+            lastMime = realType;
+            blob = new Blob(chunks, { type: realType });
 
-        recorder.start();
-        btnStart.disabled = true;
-        btnStop.disabled = false;
-        btnUpload.disabled = true;
+            // اگر خروجی خیلی کوچک است، احتمالاً داده صوتی نداشتیم
+            if (!blob || blob.size < 1000) {
+              msg.textContent = "فایل خروجی بسیار کوچک است؛ احتمالاً ورودی میکروفون صدا نداشته یا مرورگر خروجی بی‌صدا تولید کرده است.";
+              statusBadge.className = 'badge bg-danger status-badge';
+              statusBadge.textContent = 'خطا';
+              btnUpload.disabled = true;
+              btnDownload.classList.add('d-none');
+              return;
+            }
 
-        statusBadge.className = 'badge bg-danger status-badge';
-        statusBadge.textContent = 'در حال ضبط';
-        recIndicator.classList.remove('d-none');
-        msg.textContent = 'در حال ضبط…';
-      } catch (e) {
-        console.error(e);
-        msg.textContent = `خطا در دسترسی به میکروفون: ${e.name || e}`;
-      }
-    });
+            // Player
+            objectUrl = URL.createObjectURL(blob);
+            player.src = objectUrl;
+            player.classList.remove('d-none');
+            player.load();
 
-    btnStop.addEventListener('click', () => {
-      if (recorder && recorder.state === 'recording') {
-        recorder.stop();
-        btnStart.disabled = false;
-        btnStop.disabled = true;
-      }
-    });
+            // Download link (always consistent)
+            const ext = extFromMime(realType);
+            btnDownload.download = `answer_q${qid}.${ext}`;
+            btnDownload.href = objectUrl;
+            btnDownload.classList.remove('d-none');
 
-    btnUpload.addEventListener('click', async () => {
-      if (!blob) return;
+            durEl.textContent = durMs ? `~ ${(durMs/1000).toFixed(1)} ثانیه` : '';
+            btnUpload.disabled = false;
 
-      btnUpload.disabled = true;
-      statusBadge.className = 'badge bg-secondary status-badge';
-      statusBadge.textContent = 'در حال ارسال…';
-      msg.textContent = 'در حال ارسال…';
+            statusBadge.className = 'badge bg-warning text-dark status-badge';
+            statusBadge.textContent = 'آماده ارسال';
+            recIndicator.classList.add('d-none');
+            msg.textContent = `فایل آماده است. (type=${realType}, size=${blob.size} bytes)`;
+          };
 
-      const mime = blob.type || (chunks[0] && chunks[0].type) || "audio/webm";
-      const ext = extFromMime(mime);
+          // start with timeslice to improve reliability across browsers
+          recorder.start(1000);
 
-      // مهم: نام فایل را با پسوند درست بساز
-      const file = new File([blob], `answer.${ext}`, { type: mime });
+          btnStart.disabled = true;
+          btnStop.disabled = false;
+          btnUpload.disabled = true;
 
-      const form = new FormData();
-      form.append('audio', file);
-      form.append('question_id', qid);
-
-      try {
-        const res = await fetch('{{ url_for("api_voice_answer") }}', { method: 'POST', body: form });
-        const j = await res.json();
-        if (j.ok) {
-          statusBadge.className = 'badge bg-success status-badge';
-          statusBadge.textContent = 'ارسال شد';
-          msg.textContent = 'پاسخ صوتی ثبت شد.';
-        } else {
+          statusBadge.className = 'badge bg-danger status-badge';
+          statusBadge.textContent = 'در حال ضبط';
+          recIndicator.classList.remove('d-none');
+          msg.textContent = 'در حال ضبط…';
+        } catch (e) {
+          console.error(e);
+          msg.textContent = `خطا: ${e.message || e}`;
           statusBadge.className = 'badge bg-danger status-badge';
           statusBadge.textContent = 'خطا';
-          msg.textContent = 'خطا در ارسال: ' + (j.error || res.status);
+        }
+      });
+
+      btnStop.addEventListener('click', () => {
+        try {
+          if (recorder && recorder.state === 'recording') {
+            recorder.stop();
+          }
+        } finally {
+          btnStart.disabled = false;
+          btnStop.disabled = true;
+        }
+      });
+
+      btnUpload.addEventListener('click', async () => {
+        if (!blob) return;
+
+        btnUpload.disabled = true;
+        statusBadge.className = 'badge bg-secondary status-badge';
+        statusBadge.textContent = 'در حال ارسال…';
+        msg.textContent = 'در حال ارسال…';
+
+        const mime = blob.type || lastMime || (chunks[0] && chunks[0].type) || "audio/webm";
+        const ext = extFromMime(mime);
+        const file = new File([blob], `answer.${ext}`, { type: mime });
+
+        const form = new FormData();
+        form.append('audio', file);
+        form.append('question_id', qid);
+
+        try {
+          const res = await fetch('{{ url_for("api_voice_answer") }}', { method: 'POST', body: form });
+          let j = null;
+          try { j = await res.json(); } catch (_) {}
+
+          if (res.ok && j && j.ok) {
+            statusBadge.className = 'badge bg-success status-badge';
+            statusBadge.textContent = 'ارسال شد';
+            msg.textContent = 'پاسخ صوتی ثبت شد.';
+          } else {
+            const err = (j && j.error) ? j.error : (res.status + " " + res.statusText);
+            statusBadge.className = 'badge bg-danger status-badge';
+            statusBadge.textContent = 'خطا';
+            msg.textContent = 'خطا در ارسال: ' + err;
+            btnUpload.disabled = false;
+          }
+        } catch (e) {
+          console.error(e);
+          statusBadge.className = 'badge bg-danger status-badge';
+          statusBadge.textContent = 'خطای شبکه';
+          msg.textContent = 'خطای شبکه.';
           btnUpload.disabled = false;
         }
-      } catch (e) {
-        console.error(e);
-        statusBadge.className = 'badge bg-danger status-badge';
-        statusBadge.textContent = 'خطای شبکه';
-        msg.textContent = 'خطای شبکه.';
-        btnUpload.disabled = false;
-      }
+      });
     });
-  });
-</script>
-  
+  </script>
+
 </body>
 </html>
