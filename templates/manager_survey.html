@@ -6,103 +6,353 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>پرسشنامه مدیر مرکز | آزمون تطبیقی</title>
 
-  <!-- Bootstrap 5 -->
+  <!-- Bootstrap 5 (RTL) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" integrity="sha384-..." crossorigin="anonymous">
-  <!-- آیکون‌ها (اختیاری) -->
+  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-  <!-- استایل تکمیلی اختیاری -->
+  <!-- فونت اصلی (هم‌راستا با صفحات دیگر) -->
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { background: #f8f9fb; }
-    .app-navbar { background: #0d6efd; }
-    .app-navbar .navbar-brand, .app-navbar .nav-link, .app-navbar .navbar-text { color: #fff !important; }
-    .page-header { margin: 1.25rem 0 1rem; }
-    .q-card { transition: box-shadow .2s ease; }
-    .q-card:hover { box-shadow: 0 0.75rem 1.5rem rgba(13,110,253,.1); }
-    .status-badge { font-size: .8rem; }
-    .rec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #dc3545; margin-inline-start: .5rem; vertical-align: middle; animation: blink 1s infinite; }
-    @keyframes blink { 50% { opacity: 0.2; } }
-    .sticky-footer { position: sticky; bottom: 0; background: #fff; border-top: 1px solid #e9ecef; padding: .75rem; }
-    .btn-wide { min-width: 180px; }
+    /* Design System شبیه register.html */
+    *{ box-sizing:border-box; }
+    body{
+      font-family:'Vazirmatn','Vazir',Tahoma,sans-serif;
+      min-height:100vh;
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color:#333;
+      margin:0;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    .app-shell{
+      width:100%;
+      max-width: 980px;
+      background:#fff;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 15px 50px rgba(0,0,0,.2);
+      animation: fadeIn .8s ease;
+    }
+
+    .app-header{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      padding:22px 26px;
+      position:relative;
+      overflow:hidden;
+    }
+    .app-header::before{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
+
+    .app-header-inner{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+      font-size:1.05rem;
+      color:#fff;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+
+    .brand i{ opacity:.95; }
+
+    .user-pill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:.95rem;
+      white-space:nowrap;
+    }
+
+    .content{
+      padding: 22px 24px 0;
+      background:#fff;
+    }
+
+    .page-title{
+      color:#1a2980;
+      font-weight:700;
+      font-size:1.25rem;
+      margin: 0 0 6px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .page-subtitle{
+      color:#516070;
+      line-height:1.9;
+      margin:0 0 14px;
+      font-size:1rem;
+    }
+
+    .hint{
+      background:#f0f7ff;
+      border-radius:15px;
+      padding:14px 14px;
+      border-left:4px solid #3498db;
+      color:#23395d;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      line-height:1.9;
+      margin-bottom: 16px;
+    }
+    .hint i{ color:#3498db; margin-top:2px; }
+
+    /* کارت سؤال‌ها */
+    .q-card{
+      border: 1px solid #e0e6ed !important;
+      border-radius: 16px !important;
+      background:#fff;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .q-card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(0,0,0,.10) !important;
+      border-color:#cfe2ff !important;
+    }
+
+    .q-meta{
+      color:#7f8c8d;
+      font-size:.9rem;
+      margin-bottom:6px;
+    }
+
+    .q-text{
+      color:#2c3e50;
+      font-weight:600;
+      line-height:1.9;
+      margin: 0 0 12px;
+    }
+
+    .status-badge{
+      font-size:.85rem;
+      padding:.45rem .65rem;
+      border-radius:999px;
+    }
+
+    /* دکمه‌ها: primary گرادیانی */
+    .btn-grad{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%) !important;
+      border: none !important;
+      color:#fff !important;
+      box-shadow: 0 4px 15px rgba(26,41,128,.20);
+      border-radius:12px !important;
+      transition: all .3s ease !important;
+    }
+    .btn-grad:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 7px 20px rgba(26,41,128,.30);
+    }
+
+    .btn-soft{
+      background:#f8fafc !important;
+      border: 2px solid #e0e6ed !important;
+      color:#1a2980 !important;
+      border-radius:12px !important;
+      transition: all .2s ease !important;
+    }
+    .btn-soft:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      border-color:#cfe2ff !important;
+    }
+
+    .btn-danger-soft{
+      background:#fff5f5 !important;
+      border: 2px solid #ffd6d6 !important;
+      color:#b42318 !important;
+      border-radius:12px !important;
+      transition: all .2s ease !important;
+    }
+    .btn-danger-soft:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      border-color:#ffb3b3 !important;
+    }
+
+    .btn-wide{ min-width: 200px; }
+
+    /* ضبط */
+    .rec-dot{
+      display:inline-block;
+      width:8px;height:8px;border-radius:50%;
+      background:#dc3545;
+      margin-inline-start:.5rem;
+      vertical-align:middle;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink{ 50%{ opacity: .2; } }
+
+    /* فوتر چسبنده */
+    .sticky-footer{
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #e0e6ed;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+
+    .footer-note{
+      color:#7f8c8d;
+      font-size:.9rem;
+      line-height:1.9;
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0; transform: translateY(20px);}
+      to{opacity:1; transform: translateY(0);}
+    }
+
+    @media (max-width: 768px){
+      body{ padding: 10px; }
+      .app-shell{ border-radius: 15px; }
+      .content{ padding: 18px 16px 0; }
+      .app-header{ padding: 18px 16px; }
+      .btn-wide{ min-width: 100%; }
+    }
   </style>
 </head>
+
 <body>
-  <!-- ناوبری -->
-  <nav class="navbar navbar-expand-lg app-navbar">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">آزمون تطبیقی IRT</a>
-      <span class="navbar-text ms-auto">مدیر: {{ user_name or '---' }}</span>
-    </div>
-  </nav>
+  <div class="app-shell">
 
-  <!-- بدنه -->
-  <main class="container">
-    <div class="page-header">
-      <h1 class="h4 mb-2">پرسشنامه مدیر مرکز آموزش زبان فارسی</h1>
-      <p class="text-muted mb-0">برای هر سؤال، روی «شروع ضبط» بزنید، صحبت کنید و سپس «پایان ضبط» و «ارسال» را بزنید.</p>
-    </div>
+    <!-- هدر (جایگزین navbar بوت‌استرپ برای هماهنگی ظاهری) -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <a class="brand" href="{{ url_for('index') }}">
+          <i class="bi bi-diagram-3-fill"></i>
+          آزمون تطبیقی IRT
+        </a>
 
-    {% if questions and questions|length > 0 %}
-      <div class="row g-3">
-        {% for q in questions %}
-        <div class="col-12">
-          <div class="card q-card shadow-sm">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between">
-                <div>
-                  <div class="text-muted small mb-1">سؤال {{ loop.index }}</div>
-                  <h2 class="h6 mb-3">{{ q.text }}</h2>
-                </div>
-                <span class="badge bg-secondary status-badge" data-status>ضبط نشده</span>
-              </div>
-
-              <div class="d-flex flex-wrap align-items-center gap-2">
-                <button class="btn btn-outline-primary btn-sm" data-start>
-                  <i class="bi bi-mic-fill me-1"></i> شروع ضبط
-                </button>
-                <button class="btn btn-outline-danger btn-sm" data-stop disabled>
-                  <i class="bi bi-stop-fill me-1"></i> پایان ضبط
-                </button>
-                <button class="btn btn-primary btn-sm btn-wide" data-upload disabled>
-                  <i class="bi bi-cloud-arrow-up-fill me-1"></i> ارسال پاسخ صوتی
-                </button>
-                <span class="text-danger small d-none" data-rec-indicator><span class="rec-dot"></span>در حال ضبط…</span>
-                <span class="text-muted small" data-duration></span>
-              </div>
-
-              <div class="mt-3">
-                <audio class="w-100 d-none" controls data-player></audio>
-              </div>
-
-              <div class="mt-2">
-                <div class="small text-muted" data-msg>—</div>
-              </div>
-
-              <!-- نگهدارنده شناسه سؤال -->
-              <input type="hidden" value="{{ q.id }}" data-qid>
-            </div>
-          </div>
+        <div class="user-pill">
+          <i class="bi bi-person-badge"></i>
+          مدیر: {{ user_name or '---' }}
         </div>
-        {% endfor %}
+      </div>
+    </header>
+
+    <main class="content">
+      <h1 class="page-title">
+        <i class="bi bi-clipboard2-check"></i>
+        پرسشنامه مدیر مرکز آموزش زبان فارسی
+      </h1>
+
+      <p class="page-subtitle">
+        برای هر سؤال، روی «شروع ضبط» بزنید، صحبت کنید و سپس «پایان ضبط» و «ارسال» را انتخاب کنید.
+      </p>
+
+      <div class="hint">
+        <i class="bi bi-mic-fill"></i>
+        <div>
+          برای کیفیت بهتر ضبط، از مرورگرهای جدید (Chrome/Edge) و ترجیحاً اتصال امن (HTTPS) استفاده کنید.
+        </div>
       </div>
 
-      <div class="sticky-footer mt-3 d-flex justify-content-between align-items-center">
-        <div class="text-muted small">پس از ارسال پاسخ‌ها می‌توانید به آزمون تطبیقی بروید.</div>
-        <a href="{{ url_for('test') }}" class="btn btn-success">
+      {% if questions and questions|length > 0 %}
+        <div class="row g-3">
+          {% for q in questions %}
+          <div class="col-12">
+            <div class="card q-card shadow-sm">
+              <div class="card-body p-3 p-md-4">
+                <div class="d-flex align-items-start justify-content-between gap-2">
+                  <div>
+                    <div class="q-meta">سؤال {{ loop.index }}</div>
+                    <h2 class="q-text">{{ q.text }}</h2>
+                  </div>
+                  <span class="badge bg-secondary status-badge" data-status>ضبط نشده</span>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <button class="btn btn-soft btn-sm" data-start>
+                    <i class="bi bi-mic-fill me-1"></i>
+                    شروع ضبط
+                  </button>
+
+                  <button class="btn btn-danger-soft btn-sm" data-stop disabled>
+                    <i class="bi bi-stop-fill me-1"></i>
+                    پایان ضبط
+                  </button>
+
+                  <button class="btn btn-grad btn-sm btn-wide" data-upload disabled>
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i>
+                    ارسال پاسخ صوتی
+                  </button>
+
+                  <span class="text-danger small d-none" data-rec-indicator>
+                    <span class="rec-dot"></span>در حال ضبط…
+                  </span>
+                  <span class="text-muted small" data-duration></span>
+                </div>
+
+                <div class="mt-3">
+                  <audio class="w-100 d-none" controls data-player></audio>
+                </div>
+
+                <div class="mt-2">
+                  <div class="small text-muted" data-msg>—</div>
+                </div>
+
+                <!-- نگهدارنده شناسه سؤال -->
+                <input type="hidden" value="{{ q.id }}" data-qid>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="sticky-footer d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+          <div class="footer-note">پس از ارسال پاسخ‌ها می‌توانید به آزمون تطبیقی بروید.</div>
+          <a href="{{ url_for('test') }}" class="btn btn-grad">
+            ادامه به آزمون تطبیقی
+            <i class="bi bi-arrow-left-short"></i>
+          </a>
+        </div>
+
+      {% else %}
+        <div class="alert alert-info mb-3">فعلاً سؤالی برای این پرسشنامه تعریف نشده است.</div>
+        <a href="{{ url_for('test') }}" class="btn btn-grad">
           ادامه به آزمون تطبیقی
           <i class="bi bi-arrow-left-short"></i>
         </a>
-      </div>
-    {% else %}
-      <div class="alert alert-info">فعلاً سؤالی برای این پرسشنامه تعریف نشده است.</div>
-      <a href="{{ url_for('test') }}" class="btn btn-success">ادامه به آزمون تطبیقی</a>
-    {% endif %}
-  </main>
+      {% endif %}
+    </main>
+  </div>
 
-  <!-- Bootstrap JS (اختیاری برای برخی تعاملات) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
 
-  <!-- اسکریپت ضبط و آپلود -->
+  <!-- اسکریپت ضبط و آپلود (بدون تغییر) -->
   <script>
     let sharedStream = null;
 
@@ -142,7 +392,6 @@
           chunks = [];
           blob = null;
           startTs = Date.now();
-          // تلاش برای webm؛ مرورگر خودش تصمیم می‌گیرد
           recorder = new MediaRecorder(stream);
           recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
           recorder.onstop = () => {
@@ -193,7 +442,6 @@
         const form = new FormData();
         form.append('audio', file);
         form.append('question_id', qid);
-        // تلاش برای گرفتن مدت از پلیر
         const durMs = (player.duration && isFinite(player.duration)) ? Math.round(player.duration * 1000) : '';
         form.append('duration_ms', durMs);
 
