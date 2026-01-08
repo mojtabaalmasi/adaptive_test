@@ -4,81 +4,345 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>پس‌آزمون مدرس</title>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn-font@latest/dist/font-face.css" rel="stylesheet">
+
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    body { font-family: Vazirmatn, sans-serif; background:#f5f6fa; margin:0; padding:20px; }
-    .card { background:white; max-width:900px; margin:auto; padding:20px; border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.08); }
-    h1 { margin-top:0; color:#004080; }
-    .hint { color:#666; font-size:13px; line-height:1.9; margin-top:6px; }
-    .qbox { margin: 16px 0; padding: 14px; border: 1px solid #eee; border-radius: 12px; background: #fafafa; }
-    .qmeta { color:#666; font-size:12px; margin-bottom:8px; }
-    textarea { width:100%; border:1px solid #ddd; border-radius:10px; padding:10px; font-size:14px; font-family: inherit; }
-    .error { color:#d00; font-size:13px; margin-top:6px; }
-    .btn { background:#0d6efd; color:white; border-radius:10px; padding:10px 18px; text-decoration:none; border:0; cursor:pointer; }
-    .likert { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .likert label { display:flex; gap:6px; align-items:center; background:#fff; border:1px solid #e2e6ef; border-radius:10px; padding:8px 10px; cursor:pointer; }
-    .req { color:#d00; font-size:12px; margin-inline-start:6px; }
-    .actions { margin-top: 18px; display:flex; gap:10px; flex-wrap:wrap; }
-    .btn-outline { background:#fff; color:#0d6efd; border:1px solid #0d6efd; }
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Vazirmatn','Vazir',sans-serif;
+    }
+
+    body{
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color:#333;
+      min-height:100vh;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .container{
+      width:100%;
+      max-width: 900px;
+      background:#fff;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 15px 50px rgba(0,0,0,0.2);
+      animation: fadeIn .8s ease;
+    }
+
+    .header{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      padding:26px 28px;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .header::before{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
+
+    .header h1{
+      position:relative;
+      z-index:2;
+      font-size:1.9rem;
+      margin-bottom:8px;
+      text-shadow:0 2px 4px rgba(0,0,0,0.2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .header p{
+      position:relative;
+      z-index:2;
+      opacity:.95;
+      font-size:1.05rem;
+      line-height:1.9;
+    }
+
+    .content{
+      padding:26px 28px;
+      background:#fff;
+    }
+
+    .hint{
+      background:#f0f7ff;
+      border-radius:15px;
+      padding:14px 14px;
+      border-left:4px solid #3498db;
+      color:#23395d;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      line-height:1.9;
+      margin-bottom:14px;
+    }
+    .hint i{ color:#3498db; margin-top:2px; }
+
+    .qbox{
+      margin: 12px 0;
+      padding: 14px 14px;
+      border: 1px solid #e0e6ed;
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    .qmeta{
+      color:#7f8c8d;
+      font-size:.9rem;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .req{
+      color:#e74c3c;
+      font-size:.85rem;
+      font-weight:600;
+    }
+
+    label{
+      display:block;
+      color:#2c3e50;
+      line-height:1.9;
+      font-weight:600;
+      margin-bottom: 8px;
+    }
+
+    textarea{
+      width:100%;
+      border:2px solid #e0e6ed;
+      border-radius:12px;
+      padding:12px 12px;
+      font-size:1rem;
+      background:#fff;
+      transition: all .3s ease;
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    textarea:focus{
+      outline:none;
+      border-color:#3498db;
+      box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
+    }
+
+    .error{
+      margin-top:6px;
+      color:#e74c3c;
+      font-size:.95rem;
+      line-height:1.8;
+      background:#fff5f5;
+      border:1px solid #ffd6d6;
+      border-radius:12px;
+      padding:10px 12px;
+    }
+
+    .likert{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+      align-items:center;
+    }
+
+    /* گزینه‌های لیکرت به سبک چیپ */
+    .likert label{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+      background:#fff;
+      border:1px solid #e0e6ed;
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:500;
+      min-width:62px;
+      transition: all .2s ease;
+      margin:0;
+    }
+
+    .likert label:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      border-color:#cfe2ff;
+    }
+
+    input[type="radio"]{
+      accent-color:#3498db;
+      transform: scale(1.05);
+    }
+
+    .actions{
+      margin-top:18px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      flex: 1 0 220px;
+      border:none;
+      border-radius:12px;
+      padding:14px 16px;
+      font-size:1rem;
+      font-weight:600;
+      cursor:pointer;
+      transition: all .3s ease;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-decoration:none;
+    }
+
+    .btn-primary{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      box-shadow: 0 4px 15px rgba(26,41,128,0.2);
+    }
+    .btn-primary:hover{
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(26,41,128,0.3);
+    }
+
+    .btn-outline{
+      background:#fff;
+      color:#1a2980;
+      border:2px solid #e0e6ed;
+    }
+    .btn-outline:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      border-color:#cfe2ff;
+    }
+
+    .footer-note{
+      text-align:center;
+      margin-top:14px;
+      color:#7f8c8d;
+      font-size:0.9rem;
+      line-height:1.9;
+    }
+
+    @keyframes fadeIn{
+      from{ opacity:0; transform: translateY(20px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px){
+      .header h1{ font-size:1.6rem; }
+      .content{ padding:20px; }
+      .btn{ flex: 1 0 100%; }
+    }
+
+    @media (max-width: 480px){
+      body{ padding:10px; }
+      .container{ border-radius:15px; }
+      .header{ padding:20px; }
+      .header h1{ font-size:1.35rem; }
+      .likert label{ min-width:56px; padding:9px 10px; }
+    }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>پس‌آزمون مدرس</h1>
-    <p class="hint">لطفاً بر اساس تجربهٔ خود از آزمون، به پرسش‌های زیر پاسخ دهید.</p>
-    <p class="hint">
-      سوالات بسته با مقیاس ۱ تا ۵ هستند:
-      ۱=کاملاً مخالفم، ۲=مخالفم، ۳=نظری ندارم، ۴=موافقم، ۵=کاملاً موافقم.
-    </p>
+  <div class="container">
 
-    <form method="post">
+    <div class="header">
+      <h1><i class="fas fa-chalkboard-teacher"></i> پس‌آزمون مدرس</h1>
+      <p>لطفاً بر اساس تجربهٔ خود از آزمون، به پرسش‌های زیر پاسخ دهید.</p>
+    </div>
 
-      {% for q in questions %}
-      {% set field_name = 'q_' ~ q.id %}
-      {% set qtype = (q.question_type or 'open')|lower %}
-      {% set is_req = (q.is_required == 1) %}
-      {% set prev = values.get(field_name, '') %}
-      <div class="qbox">
-        <div class="qmeta">
-          سؤال {{ loop.index }}
-          {% if is_req %}<span class="req">* الزامی</span>{% endif %}
+    <div class="content">
+
+      <div class="hint">
+        <i class="fas fa-circle-info"></i>
+        <div>
+          سؤالات بسته با مقیاس ۱ تا ۵ هستند:
+          ۱=کاملاً مخالفم، ۲=مخالفم، ۳=نظری ندارم، ۴=موافقم، ۵=کاملاً موافقم.
+        </div>
+      </div>
+
+      <form method="post">
+        {% for q in questions %}
+          {% set field_name = 'q_' ~ q.id %}
+          {% set qtype = (q.question_type or 'open')|lower %}
+          {% set is_req = (q.is_required == 1) %}
+          {% set prev = values.get(field_name, '') %}
+
+          <div class="qbox">
+            <div class="qmeta">
+              <span>سؤال {{ loop.index }}</span>
+              {% if is_req %}<span class="req"><i class="fas fa-asterisk"></i> الزامی</span>{% endif %}
+            </div>
+
+            <label><strong>{{ q.text }}</strong></label>
+
+            {% if errors.get(q.id) %}
+              <div class="error">{{ errors[q.id] }}</div>
+            {% endif %}
+
+            {% if qtype == 'likert' %}
+              <div class="likert" role="radiogroup" aria-label="{{ field_name }}">
+                {% for v in [1,2,3,4,5] %}
+                  <label>
+                    <input
+                      type="radio"
+                      name="{{ field_name }}"
+                      value="{{ v }}"
+                      {% if prev|string == v|string %}checked{% endif %}
+                      {% if is_req %}required{% endif %}
+                    >
+                    {{ v }}
+                  </label>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div style="margin-top:10px;">
+                <textarea name="{{ field_name }}" rows="4" {% if is_req %}required{% endif %}>{{ prev }}</textarea>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">
+            <i class="fas fa-paper-plane"></i>
+            ثبت پاسخ‌ها
+          </button>
+
+          <a class="btn btn-outline" href="{{ url_for('result') }}">
+            <i class="fas fa-arrow-right"></i>
+            بازگشت به کارنامه
+          </a>
         </div>
 
-        <label><strong>{{ q.text }}</strong></label>
+        <div class="footer-note">
+          پاسخ‌های شما محرمانه است و صرفاً برای اهداف پژوهشی استفاده می‌شود.
+        </div>
+      </form>
 
-        {% if errors.get(q.id) %}
-          <div class="error">{{ errors[q.id] }}</div>
-        {% endif %}
-
-        {% if qtype == 'likert' %}
-          <div class="likert">
-            {% for v in [1,2,3,4,5] %}
-              <label>
-                <input
-                  type="radio"
-                  name="{{ field_name }}"
-                  value="{{ v }}"
-                  {% if prev|string == v|string %}checked{% endif %}
-                  {% if is_req %}required{% endif %}
-                >
-                {{ v }}
-              </label>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div style="margin-top:10px;">
-            <textarea name="{{ field_name }}" rows="4" {% if is_req %}required{% endif %}>{{ prev }}</textarea>
-          </div>
-        {% endif %}
-      </div>
-      {% endfor %}
-
-      <div class="actions">
-        <button class="btn" type="submit">ثبت پاسخ‌ها</button>
-        <a class="btn btn-outline" href="{{ url_for('result') }}">بازگشت به کارنامه</a>
-      </div>
-    </form>
+    </div>
   </div>
 </body>
 </html>
