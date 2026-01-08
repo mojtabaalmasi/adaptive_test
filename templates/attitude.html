@@ -4,36 +4,235 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>پرسشنامه نگرش ({{ mode }})</title>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn-font@latest/dist/font-face.css" rel="stylesheet">
+
+  <!-- فونت و آیکون‌ها (هم‌راستا با register.html) -->
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    body{font-family:Vazirmatn,Tahoma,sans-serif;background:#f5f6fa;margin:0}
-    .wrap{max-width:900px;margin:36px auto;padding:0 16px}
-    .card{background:#fff;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:22px}
-    h1{margin:0 0 6px;color:#004080;font-size:20px}
-    .muted{color:#666;font-size:13px;margin-bottom:14px}
-    .q{border:1px solid #e9ecef;border-radius:12px;padding:14px 12px;margin:10px 0;background:#fff}
-    .q-title{font-size:14px;line-height:1.9;margin-bottom:10px}
-    .opts{display:flex;gap:10px;flex-wrap:wrap}
-    label{font-size:13px;color:#333}
-    .actions{margin-top:16px}
-    .btn{background:#0d6efd;color:#fff;border:0;border-radius:10px;padding:10px 16px;cursor:pointer}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Vazirmatn', 'Vazir', Tahoma, sans-serif;
+    }
+
+    body{
+      min-height: 100vh;
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color:#333;
+      padding: 20px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .container{
+      width:100%;
+      max-width: 900px;
+      background:#fff;
+      border-radius: 20px;
+      overflow:hidden;
+      box-shadow: 0 15px 50px rgba(0,0,0,.2);
+      animation: fadeIn .8s ease;
+    }
+
+    .header{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      padding: 26px 28px;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .header::before{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
+
+    .header h1{
+      position:relative;
+      z-index:1;
+      font-size: 1.9rem;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 4px rgba(0,0,0,.2);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .header p{
+      position:relative;
+      z-index:1;
+      opacity:.95;
+      font-size:1.05rem;
+      line-height:1.9;
+    }
+
+    .content{
+      padding: 26px 28px;
+      background:#fff;
+    }
+
+    .hint{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:#f0f7ff;
+      border:1px solid #e0e6ed;
+      border-left:4px solid #3498db;
+      border-radius: 14px;
+      padding: 14px 14px;
+      color:#23395d;
+      margin-bottom: 18px;
+    }
+
+    .hint i{
+      color:#3498db;
+      font-size:1.1rem;
+    }
+
+    .q{
+      border:1px solid #e0e6ed;
+      border-radius: 14px;
+      padding: 14px 14px;
+      margin: 12px 0;
+      background: #f8fafc;
+    }
+
+    .q-title{
+      font-size: 1rem;
+      line-height: 1.9;
+      color:#2c3e50;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .opts{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    /* گزینه‌ها را شبیه چیپ/کارت کوچک می‌کنیم تا با استایل کلی هماهنگ شود */
+    .opt{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:#fff;
+      border:1px solid #e0e6ed;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      transition: all .2s ease;
+      user-select:none;
+      min-width: 62px;
+      justify-content:center;
+    }
+
+    .opt:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,.06);
+      border-color: #cfe2ff;
+    }
+
+    input[type="radio"]{
+      accent-color: #3498db;
+      transform: scale(1.05);
+    }
+
+    .actions{
+      margin-top: 18px;
+    }
+
+    .btn{
+      width: 100%;
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      border:0;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor:pointer;
+      transition: all .3s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      box-shadow: 0 4px 15px rgba(26, 41, 128, 0.2);
+    }
+
+    .btn:hover{
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(26, 41, 128, 0.3);
+    }
+
+    .footer-note{
+      text-align:center;
+      margin-top: 14px;
+      color:#7f8c8d;
+      font-size:.9rem;
+      line-height:1.9;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px){
+      .header h1{ font-size: 1.6rem; }
+      .content{ padding: 20px; }
+    }
+
+    @media (max-width: 480px){
+      body{ padding: 10px; }
+      .container{ border-radius: 15px; }
+      .header{ padding: 20px; }
+      .header h1{ font-size: 1.35rem; }
+      .opt{ min-width: 56px; padding: 9px 10px; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>پرسشنامه نگرش ({{ mode }})</h1>
-      <div class="muted">۱=کاملاً مخالفم … ۵=کاملاً موافقم</div>
+  <div class="container">
+    <div class="header">
+      <h1>
+        <i class="fas fa-clipboard-list"></i>
+        پرسشنامه نگرش ({{ mode }})
+      </h1>
+      <p>لطفاً به همه گویه‌ها پاسخ دهید. ۱=کاملاً مخالفم … ۵=کاملاً موافقم</p>
+    </div>
+
+    <div class="content">
+      <div class="hint">
+        <i class="fas fa-circle-info"></i>
+        <div>
+          مقیاس پاسخ‌گویی از ۱ تا ۵ است. برای هر گویه یک گزینه انتخاب کنید.
+        </div>
+      </div>
 
       <form method="post">
         {% for it in items %}
           <div class="q">
             <div class="q-title">{{ loop.index }}. {{ it.text }}</div>
-            <div class="opts">
+            <div class="opts" role="radiogroup" aria-label="item_{{ it.id }}">
               {% for v in [1,2,3,4,5] %}
-                <label>
+                <label class="opt">
                   <input type="radio" name="item_{{ it.id }}" value="{{ v }}" required>
-                  {{ v }}
+                  <span>{{ v }}</span>
                 </label>
               {% endfor %}
             </div>
@@ -41,7 +240,13 @@
         {% endfor %}
 
         <div class="actions">
-          <button class="btn" type="submit">ثبت و ادامه</button>
+          <button class="btn" type="submit">
+            <i class="fas fa-paper-plane"></i>
+            ثبت و ادامه
+          </button>
+          <div class="footer-note">
+            پاسخ‌های شما محرمانه است و صرفاً برای اهداف پژوهشی تحلیل خواهد شد.
+          </div>
         </div>
       </form>
     </div>
