@@ -1,136 +1,255 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پرسشنامه نگرش (PKRQ)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پرسشنامه نگرش (PKRQ)</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Vazirmatn', sans-serif;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            min-height: 100vh;
-        }
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Vazirmatn','Vazir',sans-serif;
+    }
 
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-            padding: 30px;
-        }
+    body{
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color:#333;
+      min-height:100vh;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
 
-        h2 {
-            color: #1a2980;
-            margin-bottom: 10px;
-        }
+    .container{
+      width:100%;
+      max-width:900px;
+      background:#fff;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 15px 50px rgba(0,0,0,0.2);
+      animation: fadeIn .8s ease;
+    }
 
-        .subtitle {
-            color: #555;
-            margin-bottom: 25px;
-        }
+    .header{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      padding:26px 28px;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
 
-        .item {
-            border: 1px solid #e0e6ed;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #f8fafc;
-        }
+    .header::before{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
 
-        .item-text {
-            margin-bottom: 10px;
-            font-weight: 500;
-            color: #2c3e50;
-        }
+    .header h2{
+      font-size:1.9rem;
+      margin-bottom:8px;
+      position:relative;
+      z-index:2;
+      text-shadow:0 2px 4px rgba(0,0,0,0.2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
 
-        .scale {
-            display: flex;
-            justify-content: space-between;
-            max-width: 500px;
-        }
+    .header p{
+      font-size:1.05rem;
+      opacity:.95;
+      position:relative;
+      z-index:2;
+      line-height:1.9;
+    }
 
-        .scale label {
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
+    .content{
+      padding:26px 28px;
+      background:#fff;
+    }
 
-        .scale input {
-            margin-left: 5px;
-        }
+    .hint{
+      background:#f0f7ff;
+      border-radius:15px;
+      padding:14px 14px;
+      border-left:4px solid #3498db;
+      color:#23395d;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      line-height:1.9;
+      margin-bottom:18px;
+    }
 
-        button {
-            margin-top: 30px;
-            width: 100%;
-            padding: 16px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            cursor: pointer;
-            background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
-        }
+    .hint i{
+      color:#3498db;
+      margin-top:2px;
+    }
 
-        button:hover {
-            opacity: 0.95;
-        }
+    .item{
+      border:1px solid #e0e6ed;
+      border-radius:14px;
+      padding:14px 14px;
+      margin-bottom:12px;
+      background:#f8fafc;
+    }
 
-        .footer-note {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #777;
-            text-align: center;
-        }
-    </style>
+    .item-text{
+      margin-bottom:10px;
+      font-weight:500;
+      color:#2c3e50;
+      line-height:1.9;
+      font-size:1rem;
+    }
+
+    .scale{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    /* گزینه‌ها به شکل چیپ، نزدیک به UX صفحات دیگر */
+    .opt{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:#fff;
+      border:1px solid #e0e6ed;
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition: all .2s ease;
+      user-select:none;
+      min-width:62px;
+      justify-content:center;
+    }
+
+    .opt:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      border-color:#cfe2ff;
+    }
+
+    .opt input{
+      accent-color:#3498db;
+      transform: scale(1.05);
+    }
+
+    .actions{
+      margin-top:18px;
+    }
+
+    button{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      border:none;
+      padding:16px;
+      font-size:1.05rem;
+      font-weight:600;
+      border-radius:12px;
+      cursor:pointer;
+      transition: all .3s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      width:100%;
+      box-shadow:0 4px 15px rgba(26, 41, 128, 0.2);
+    }
+
+    button:hover{
+      transform: translateY(-3px);
+      box-shadow:0 7px 20px rgba(26, 41, 128, 0.3);
+    }
+
+    .footer-note{
+      text-align:center;
+      margin-top:14px;
+      color:#7f8c8d;
+      font-size:0.9rem;
+      line-height:1.9;
+    }
+
+    @keyframes fadeIn{
+      from{ opacity:0; transform: translateY(20px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px){
+      .header h2{ font-size:1.6rem; }
+      .content{ padding:20px; }
+      .opt{ min-width:56px; }
+    }
+
+    @media (max-width: 480px){
+      body{ padding:10px; }
+      .container{ border-radius:15px; }
+      .header{ padding:20px; }
+      .header h2{ font-size:1.35rem; }
+    }
+  </style>
 </head>
+
 <body>
+  <div class="container">
 
-<div class="container">
-    <h2>پرسشنامه نگرش (PKRQ)</h2>
-    <p class="subtitle">
-        لطفاً میزان موافقت خود را با هر یک از گزاره‌های زیر مشخص کنید.
-        <br>
-        (۱ = کاملاً مخالفم … ۵ = کاملاً موافقم)
-    </p>
+    <div class="header">
+      <h2><i class="fas fa-clipboard-list"></i> پرسشنامه نگرش (PKRQ)</h2>
+      <p>لطفاً میزان موافقت خود را با هر گزاره مشخص کنید</p>
+    </div>
 
-    <form method="POST" action="{{ url_for('attitude', mode=mode) }}">
-
-        {% for item in items %}
-        <div class="item">
-            <div class="item-text">
-                {{ loop.index }}. {{ item.text }}
-            </div>
-
-            <div class="scale">
-                {% for v in [1,2,3,4,5] %}
-                <label>
-                    <input type="radio"
-                           name="item_{{ item.id }}"
-                           value="{{ v }}"
-                           required>
-                    {{ v }}
-                </label>
-                {% endfor %}
-            </div>
+    <div class="content">
+      <div class="hint">
+        <i class="fas fa-circle-info"></i>
+        <div>
+          مقیاس پاسخ‌گویی: <strong>۱</strong> = کاملاً مخالفم … <strong>۵</strong> = کاملاً موافقم
         </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('attitude', mode=mode) }}">
+        {% for item in items %}
+          <div class="item">
+            <div class="item-text">{{ loop.index }}. {{ item.text }}</div>
+
+            <div class="scale" role="radiogroup" aria-label="item_{{ item.id }}">
+              {% for v in [1,2,3,4,5] %}
+                <label class="opt">
+                  <input type="radio" name="item_{{ item.id }}" value="{{ v }}" required>
+                  <span>{{ v }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
         {% endfor %}
 
-        <button type="submit">
+        <div class="actions">
+          <button type="submit">
+            <i class="fas fa-paper-plane"></i>
             ثبت و ادامه به آزمون
-        </button>
+          </button>
 
-        <div class="footer-note">
+          <div class="footer-note">
             پاسخ‌های شما صرفاً برای اهداف پژوهشی استفاده می‌شود.
+          </div>
         </div>
+      </form>
+    </div>
 
-    </form>
-</div>
-
+  </div>
 </body>
 </html>
