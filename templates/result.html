@@ -4,208 +4,466 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>نتایج آزمون</title>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn-font@latest/dist/font-face.css" rel="stylesheet" type="text/css" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    :root{
-      --bg:#f5f6fa; --card:#fff; --text:#222; --muted:#666;
-      --ok:#28a745; --brand:#0d6efd; --shadow:0 6px 16px rgba(0,0,0,.08); --radius:14px;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Vazirmatn','Vazir',Tahoma,sans-serif;
     }
-    *{box-sizing:border-box}
-    body{font-family:Vazirmatn, Tahoma, sans-serif; background:var(--bg); color:var(--text); margin:0}
-    .container{max-width:1000px; margin:28px auto; padding:0 16px}
-    .header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
-    .title{font-size:20px; color:#004080; margin:0}
-    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
-    .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
-    @media (max-width: 800px){ .grid{grid-template-columns:1fr} }
-    .stat{display:flex; gap:12px; align-items:center; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:10px 12px}
-    .stat .k{color:var(--muted); font-size:13px}
-    .stat .v{font-weight:700}
-    .band{display:inline-block; padding:4px 10px; border-radius:999px; background:#eef3ff; color:#1b47b3; font-size:13px}
-    .progress-bar{height:10px; background:#e9ecef; border-radius:999px; overflow:hidden}
-    .progress-fill{height:100%; background:var(--ok); width:0%}
-    .img-wrap{background:#fafafa; border:1px solid #eee; border-radius:10px; padding:8px; text-align:center}
-    .img-wrap img{max-width:100%; height:auto; border-radius:8px}
-    .hint{color:var(--muted); font-size:13px}
-    .section-title{margin:0 0 10px; font-size:16px}
-    .btn{display:inline-block; background:var(--brand); color:#fff; text-decoration:none; padding:10px 14px; border-radius:10px}
-    .btn.secondary{background:#198754}
-    .pill{display:inline-block; padding:3px 10px; border-radius:999px; background:#f1f3f5; color:#333; font-size:12px; border:1px solid #e9ecef;}
+
+    body{
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color:#333;
+      min-height:100vh;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    .container{
+      width:100%;
+      max-width: 1000px;
+      background:#fff;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 15px 50px rgba(0,0,0,0.2);
+      animation: fadeIn .8s ease;
+      margin: 0;
+    }
+
+    .header{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      padding:24px 26px;
+      position:relative;
+      overflow:hidden;
+    }
+    .header::before{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
+
+    .header-inner{
+      position:relative;
+      z-index:2;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .title h1{
+      font-size:1.9rem;
+      text-shadow:0 2px 4px rgba(0,0,0,0.2);
+      margin:0;
+    }
+
+    .meta{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:.95rem;
+      white-space:nowrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#e3f2fd;
+      color:#1a2980;
+      font-size:.9rem;
+      border:1px solid #e0e6ed;
+    }
+
+    .content{
+      padding:26px 28px;
+      background:#fff;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:16px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background:#fff;
+      border:1px solid #e0e6ed;
+      border-radius:16px;
+      padding:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0 0 12px;
+      padding-bottom:10px;
+      border-bottom:2px solid #f0f4f8;
+      color:#1a2980;
+      font-size:1.15rem;
+      font-weight:700;
+    }
+    .section-title i{
+      background:#e3f2fd;
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.1rem;
+      color:#1a2980;
+    }
+
+    .hint{
+      color:#516070;
+      font-size:0.95rem;
+      line-height:1.9;
+      margin-top:8px;
+    }
+
+    .stat{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:#f8fafc;
+      border:1px solid #e0e6ed;
+      border-radius:12px;
+      padding:12px 12px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+
+    .stat .k{
+      color:#7f8c8d;
+      font-size:0.95rem;
+    }
+
+    .stat .v{
+      font-weight:700;
+      color:#2c3e50;
+    }
+
+    .band{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 12px;
+      border-radius:999px;
+      background:#e3f2fd;
+      color:#1a2980;
+      font-size:0.95rem;
+      border:1px solid #e0e6ed;
+      white-space:nowrap;
+    }
+
+    .progress-bar{
+      height:10px;
+      background:#e9ecef;
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .progress-fill{
+      height:100%;
+      background:#26d0ce;
+      width:0%;
+    }
+
+    .btn{
+      width:100%;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-decoration:none;
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      border:none;
+      padding:14px 16px;
+      font-size:1rem;
+      font-weight:600;
+      border-radius:12px;
+      cursor:pointer;
+      transition: all .3s ease;
+      box-shadow:0 4px 15px rgba(26, 41, 128, 0.2);
+      margin-top:10px;
+    }
+    .btn:hover{
+      transform: translateY(-3px);
+      box-shadow:0 7px 20px rgba(26, 41, 128, 0.3);
+    }
+
+    .callout{
+      background:#f0f7ff;
+      border-radius:15px;
+      padding:14px 14px;
+      border-left:4px solid #3498db;
+      color:#23395d;
+      line-height:1.9;
+    }
+
+    .img-wrap{
+      background:#f8fafc;
+      border:1px solid #e0e6ed;
+      border-radius:16px;
+      padding:12px;
+      text-align:center;
+    }
+    .img-wrap img{
+      max-width:100%;
+      height:auto;
+      border-radius:12px;
+      border:1px solid #e0e6ed;
+      background:#fff;
+    }
+
+    @keyframes fadeIn{
+      from{ opacity:0; transform: translateY(20px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px){
+      body{ padding:10px; }
+      .container{ border-radius:15px; }
+      .header{ padding:20px; }
+      .title h1{ font-size:1.4rem; }
+      .content{ padding:20px; }
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
+
     <div class="header">
-      <h1 class="title">نتیجهٔ آزمون تطبیقی</h1>
-      <div class="hint">
-        کاربر: {{ user_name }}
-        {% if role %}<span class="pill" style="margin-right:8px;">نقش: {{ role }}</span>{% endif %}
-      </div>
-    </div>
-
-    {# ------------------------------------------------------------
-       Fail-safe post-test link selection based on role
-       Even if backend accidentally passes wrong post_test_url
-       ------------------------------------------------------------ #}
-    {% set role_norm = (role|string)|lower if role is defined and role else '' %}
-    {% set computed_post_url = post_test_url %}
-    {% if not computed_post_url %}
-      {% if role_norm == 'learner' %}
-        {% set computed_post_url = url_for('post_test') %}
-      {% elif role_norm == 'teacher' %}
-        {% set computed_post_url = url_for('post_test_teacher') %}
-      {% elif role_norm == 'manager' %}
-        {% set computed_post_url = url_for('post_test_manager') %}
-      {% else %}
-        {% set computed_post_url = None %}
-      {% endif %}
-    {% else %}
-      {# اگر بک‌اند اشتباه لینک داده باشد، اینجا اصلاحش می‌کنیم #}
-      {% if role_norm == 'manager' and ('post_test_teacher' in computed_post_url or '/post_test_teacher' in computed_post_url) %}
-        {% set computed_post_url = url_for('post_test_manager') %}
-      {% elif role_norm == 'teacher' and ('post_test_manager' in computed_post_url or '/post_test_manager' in computed_post_url) %}
-        {% set computed_post_url = url_for('post_test_teacher') %}
-      {% endif %}
-    {% endif %}
-
-    <!-- کارت‌های اصلی: خلاصه عددی + تفسیر -->
-    <div class="grid">
-      <div class="card">
-        <h2 class="section-title">خلاصهٔ عددی</h2>
-
-        <div class="stat">
-          <span class="k">امتیاز توانایی (θ):</span>
-          <span class="v">{{ "%.3f"|format(theta) }}</span>
-          <span class="band">{{ band }}</span>
+      <div class="header-inner">
+        <div class="title">
+          <i class="fas fa-chart-line"></i>
+          <h1>نتیجهٔ آزمون تطبیقی</h1>
         </div>
 
-        {% if se is not none %}
-        <div class="stat">
-          <span class="k">خطای استاندارد (SE):</span>
-          <span class="v">{{ "%.3f"|format(se) }}</span>
-        </div>
-        <div class="stat">
-          <span class="k">بازهٔ ۶۸٪:</span>
-          <span class="v">{{ "%.2f"|format(ci68[0]) }} تا {{ "%.2f"|format(ci68[1]) }}</span>
-        </div>
-        <div class="stat">
-          <span class="k">بازهٔ ۹۵٪:</span>
-          <span class="v">{{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}</span>
-        </div>
-        {% endif %}
-
-        <div class="stat">
-          <span class="k">تعداد سؤالات پاسخ‌داده‌شده:</span>
-          <span class="v">{{ n_total }}</span>
-        </div>
-        <div class="stat">
-          <span class="k">پاسخ‌های درست:</span>
-          <span class="v">{{ n_correct }}</span>
-        </div>
-        <div class="stat">
-          <span class="k">پاسخ‌های نادرست:</span>
-          <span class="v">{{ n_wrong }}</span>
-        </div>
-        <div class="stat">
-          <span class="k">دقت کل:</span>
-          <span class="v">{{ "%.1f"|format(accuracy) }}٪</span>
-        </div>
-
-        <div style="margin-top:14px">
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: {{ accuracy }}%"></div>
-          </div>
-          <div class="hint" style="margin-top:6px">
-            نسبت پاسخ‌های درست از کل پاسخ‌ها
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title">تفسیر نتیجه</h2>
-        <p style="margin-top:0">{{ interpretation }}</p>
-
-        <p class="hint">
-          در این آزمون به جای یک نمرهٔ خام، یک نمرهٔ «نرمال‌شده» گزارش می‌شود که با نماد θ (تتا) نشان داده شده است.
-          مقدار θ نشان می‌دهد سطح توانایی شما نسبت به یک مقیاس استاندارد (با میانگین حدود صفر) در چه محدوده‌ای قرار دارد.
-        </p>
-
-        {% if se is not none %}
-        <p class="hint">
-          خطای استاندارد (SE) نشان می‌دهد این برآورد چقدر مطمئن است: هرچه SE کوچک‌تر باشد،
-          بازهٔ اطمینان تنگ‌تر است و می‌توان با قطعیت بیشتری دربارهٔ توانایی شما اظهار نظر کرد.
-        </p>
-        {% endif %}
-
-        <div style="margin-top:12px">
-          {% if computed_post_url and not post_test_done %}
-            <a class="btn" href="{{ computed_post_url }}">تکمیل پرسشنامهٔ تکمیلی</a>
-          {% elif post_test_done %}
-            <p class="hint">پرسشنامهٔ تکمیلی مربوط به نقش شما قبلاً تکمیل شده است.</p>
-          {% else %}
-            <p class="hint">پرسشنامهٔ تکمیلی برای نقش شما تعریف نشده است.</p>
+        <div class="meta">
+          <span><i class="fas fa-user"></i> کاربر: {{ user_name }}</span>
+          {% if role %}
+            <span class="pill"><i class="fas fa-id-badge"></i> نقش: {{ role }}</span>
           {% endif %}
         </div>
-
       </div>
     </div>
 
-    <!-- باکس فنی پژوهشی -->
-    <div class="card" style="margin-top:16px;">
-      <h2 class="section-title">گزارش فنی آزمون</h2>
+    <div class="content">
 
-      <p class="hint" style="margin-top:4px;">
-        این آزمون بر اساس «سیستم آزمون تطبیقی» و مدل سه‌پارامتری پاسخ به سؤال (3PL IRT) نمرهٔ توانایی شما را برآورد کرده است.
-      </p>
-
-      <p class="hint" style="margin-top:4px;">
-        • نمرهٔ برآوردشدهٔ توانایی (θ̂): {{ "%.3f"|format(theta) }}
-        {% if se is not none %}
-        • خطای استاندارد برآورد (SE): {{ "%.3f"|format(se) }}
-        • بازهٔ اطمینان ۹۵٪ برای θ̂: {{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}
+      {# ------------------------------------------------------------
+         Fail-safe post-test link selection based on role
+         Even if backend accidentally passes wrong post_test_url
+         ------------------------------------------------------------ #}
+      {% set role_norm = (role|string)|lower if role is defined and role else '' %}
+      {% set computed_post_url = post_test_url %}
+      {% if not computed_post_url %}
+        {% if role_norm == 'learner' %}
+          {% set computed_post_url = url_for('post_test') %}
+        {% elif role_norm == 'teacher' %}
+          {% set computed_post_url = url_for('post_test_teacher') %}
+        {% elif role_norm == 'manager' %}
+          {% set computed_post_url = url_for('post_test_manager') %}
         {% else %}
-        • به دلیل تعداد کم سؤالات، برآورد دقیق خطای استاندارد امکان‌پذیر نبوده است.
+          {% set computed_post_url = None %}
         {% endif %}
-      </p>
-
-      <p class="hint" style="margin-top:6px;">
-        فرآیند آزمون به گونه‌ای طراحی شده است که با هر پاسخ، توانایی شما دوباره برآورد می‌شود و
-        سؤال بعدی بر اساس همین برآورد انتخاب می‌گردد. آزمون پس از رسیدن به شرایط زیر متوقف شده است:
-        حداقل تعداد سؤال، کنترل خطای استاندارد (SE)، پایداری نمرهٔ θ در چند سؤال پیاپی،
-        و همچنین سقف حداکثری تعداد سؤال برای حفظ زمان آزمون.
-      </p>
-
-      <p class="hint" style="margin-top:4px;">
-        این اطلاعات برای تحلیل‌های پژوهشی و روان‌سنجی (مانند مقایسهٔ گروه‌ها، بررسی دقت آزمون
-        و تحلیل عملکرد آیتم‌ها) قابل استفاده است و به شما نشان می‌دهد نمرهٔ گزارش‌شده تنها یک عدد خام نیست،
-        بلکه نتیجهٔ یک مدل اندازه‌گیری استاندارد است.
-      </p>
-    </div>
-
-    <!-- نمودارها -->
-    <div class="grid" style="margin-top:16px">
-      {% if icc_url %}
-      <div class="card img-wrap">
-        <div class="section-title">منحنی‌های ICC آیتم‌های پاسخ‌داده‌شده</div>
-        <img src="{{ icc_url }}" alt="ICC">
-        <p class="hint" style="margin-top:8px;">
-          هر منحنی نشان می‌دهد احتمال پاسخ صحیح به هر سؤال، در سطوح مختلف توانایی (θ) چگونه تغییر می‌کند.
-          هرچه منحنی یک سؤال در محدودهٔ θ شما شیب تندتری داشته باشد، آن سؤال برای سنجش دقیق‌تر شما مفیدتر بوده است.
-        </p>
-      </div>
+      {% else %}
+        {# اگر بک‌اند اشتباه لینک داده باشد، اینجا اصلاحش می‌کنیم #}
+        {% if role_norm == 'manager' and ('post_test_teacher' in computed_post_url or '/post_test_teacher' in computed_post_url) %}
+          {% set computed_post_url = url_for('post_test_manager') %}
+        {% elif role_norm == 'teacher' and ('post_test_manager' in computed_post_url or '/post_test_manager' in computed_post_url) %}
+          {% set computed_post_url = url_for('post_test_teacher') %}
+        {% endif %}
       {% endif %}
 
-      {% if info_url %}
-      <div class="card img-wrap">
-        <div class="section-title">تابع اطلاعات کل آزمون</div>
-        <img src="{{ info_url }}" alt="Info">
-        <p class="hint" style="margin-top:8px;">
-          این نمودار نشان می‌دهد آزمون در کدام نواحی θ بیشترین دقت را دارد.
-          هرچه منحنی بالاتر باشد، آزمون در آن سطح توانایی، اطلاعات بیشتری فراهم می‌کند
-          و نمرهٔ شما با خطای کمتر برآورد می‌شود.
+      <!-- کارت‌های اصلی: خلاصه عددی + تفسیر -->
+      <div class="grid">
+
+        <div class="card">
+          <div class="section-title"><i class="fas fa-square-poll-vertical"></i> خلاصهٔ عددی</div>
+
+          <div class="stat">
+            <span class="k">امتیاز توانایی (θ):</span>
+            <span class="v">{{ "%.3f"|format(theta) }}</span>
+            <span class="band"><i class="fas fa-layer-group"></i> {{ band }}</span>
+          </div>
+
+          {% if se is not none %}
+            <div class="stat">
+              <span class="k">خطای استاندارد (SE):</span>
+              <span class="v">{{ "%.3f"|format(se) }}</span>
+            </div>
+            <div class="stat">
+              <span class="k">بازهٔ ۶۸٪:</span>
+              <span class="v">{{ "%.2f"|format(ci68[0]) }} تا {{ "%.2f"|format(ci68[1]) }}</span>
+            </div>
+            <div class="stat">
+              <span class="k">بازهٔ ۹۵٪:</span>
+              <span class="v">{{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}</span>
+            </div>
+          {% endif %}
+
+          <div class="stat">
+            <span class="k">تعداد سؤالات پاسخ‌داده‌شده:</span>
+            <span class="v">{{ n_total }}</span>
+          </div>
+          <div class="stat">
+            <span class="k">پاسخ‌های درست:</span>
+            <span class="v">{{ n_correct }}</span>
+          </div>
+          <div class="stat">
+            <span class="k">پاسخ‌های نادرست:</span>
+            <span class="v">{{ n_wrong }}</span>
+          </div>
+          <div class="stat">
+            <span class="k">دقت کل:</span>
+            <span class="v">{{ "%.1f"|format(accuracy) }}٪</span>
+          </div>
+
+          <div style="margin-top:14px;">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {{ accuracy }}%"></div>
+            </div>
+            <div class="hint" style="margin-top:6px;">
+              نسبت پاسخ‌های درست از کل پاسخ‌ها
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title"><i class="fas fa-circle-info"></i> تفسیر نتیجه</div>
+
+          <div class="callout">
+            {{ interpretation }}
+          </div>
+
+          <p class="hint" style="margin-top:10px;">
+            در این آزمون به جای یک نمرهٔ خام، یک نمرهٔ «نرمال‌شده» گزارش می‌شود که با نماد θ (تتا) نشان داده شده است.
+            مقدار θ نشان می‌دهد سطح توانایی شما نسبت به یک مقیاس استاندارد (با میانگین حدود صفر) در چه محدوده‌ای قرار دارد.
+          </p>
+
+          {% if se is not none %}
+            <p class="hint">
+              خطای استاندارد (SE) نشان می‌دهد این برآورد چقدر مطمئن است: هرچه SE کوچک‌تر باشد،
+              بازهٔ اطمینان تنگ‌تر است و می‌توان با قطعیت بیشتری دربارهٔ توانایی شما اظهار نظر کرد.
+            </p>
+          {% endif %}
+
+          <div style="margin-top:12px;">
+            {% if computed_post_url and not post_test_done %}
+              <a class="btn" href="{{ computed_post_url }}">
+                <i class="fas fa-clipboard-list"></i>
+                تکمیل پرسشنامهٔ تکمیلی
+              </a>
+            {% elif post_test_done %}
+              <p class="hint">پرسشنامهٔ تکمیلی مربوط به نقش شما قبلاً تکمیل شده است.</p>
+            {% else %}
+              <p class="hint">پرسشنامهٔ تکمیلی برای نقش شما تعریف نشده است.</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- باکس فنی پژوهشی -->
+      <div class="card" style="margin-top:16px;">
+        <div class="section-title"><i class="fas fa-microscope"></i> گزارش فنی آزمون</div>
+
+        <p class="hint" style="margin-top:4px;">
+          این آزمون بر اساس «سیستم آزمون تطبیقی» و مدل سه‌پارامتری پاسخ به سؤال (3PL IRT) نمرهٔ توانایی شما را برآورد کرده است.
+        </p>
+
+        <p class="hint" style="margin-top:4px;">
+          • نمرهٔ برآوردشدهٔ توانایی (θ̂): {{ "%.3f"|format(theta) }}
+          {% if se is not none %}
+          • خطای استاندارد برآورد (SE): {{ "%.3f"|format(se) }}
+          • بازهٔ اطمینان ۹۵٪ برای θ̂: {{ "%.2f"|format(ci95[0]) }} تا {{ "%.2f"|format(ci95[1]) }}
+          {% else %}
+          • به دلیل تعداد کم سؤالات، برآورد دقیق خطای استاندارد امکان‌پذیر نبوده است.
+          {% endif %}
+        </p>
+
+        <p class="hint" style="margin-top:6px;">
+          فرآیند آزمون به گونه‌ای طراحی شده است که با هر پاسخ، توانایی شما دوباره برآورد می‌شود و
+          سؤال بعدی بر اساس همین برآورد انتخاب می‌گردد. آزمون پس از رسیدن به شرایط زیر متوقف شده است:
+          حداقل تعداد سؤال، کنترل خطای استاندارد (SE)، پایداری نمرهٔ θ در چند سؤال پیاپی،
+          و همچنین سقف حداکثری تعداد سؤال برای حفظ زمان آزمون.
+        </p>
+
+        <p class="hint" style="margin-top:4px;">
+          این اطلاعات برای تحلیل‌های پژوهشی و روان‌سنجی (مانند مقایسهٔ گروه‌ها، بررسی دقت آزمون
+          و تحلیل عملکرد آیتم‌ها) قابل استفاده است و به شما نشان می‌دهد نمرهٔ گزارش‌شده تنها یک عدد خام نیست،
+          بلکه نتیجهٔ یک مدل اندازه‌گیری استاندارد است.
         </p>
       </div>
-      {% endif %}
+
+      <!-- نمودارها -->
+      <div class="grid" style="margin-top:16px;">
+        {% if icc_url %}
+          <div class="card img-wrap">
+            <div class="section-title" style="border-bottom:0; padding-bottom:0; margin-bottom:10px;">
+              <i class="fas fa-wave-square"></i> منحنی‌های ICC آیتم‌های پاسخ‌داده‌شده
+            </div>
+            <img src="{{ icc_url }}" alt="ICC">
+            <p class="hint" style="margin-top:8px;">
+              هر منحنی نشان می‌دهد احتمال پاسخ صحیح به هر سؤال، در سطوح مختلف توانایی (θ) چگونه تغییر می‌کند.
+              هرچه منحنی یک سؤال در محدودهٔ θ شما شیب تندتری داشته باشد، آن سؤال برای سنجش دقیق‌تر شما مفیدتر بوده است.
+            </p>
+          </div>
+        {% endif %}
+
+        {% if info_url %}
+          <div class="card img-wrap">
+            <div class="section-title" style="border-bottom:0; padding-bottom:0; margin-bottom:10px;">
+              <i class="fas fa-chart-area"></i> تابع اطلاعات کل آزمون
+            </div>
+            <img src="{{ info_url }}" alt="Info">
+            <p class="hint" style="margin-top:8px;">
+              این نمودار نشان می‌دهد آزمون در کدام نواحی θ بیشترین دقت را دارد.
+              هرچه منحنی بالاتر باشد، آزمون در آن سطح توانایی، اطلاعات بیشتری فراهم می‌کند
+              و نمرهٔ شما با خطای کمتر برآورد می‌شود.
+            </p>
+          </div>
+        {% endif %}
+      </div>
+
     </div>
   </div>
 </body>
