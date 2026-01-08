@@ -634,7 +634,13 @@ def manager_survey():
         return redirect(url_for("index"))
     if session.get("role") != "manager":
         return redirect(url_for("test"))
+    
+    print("DATABASE =", DATABASE)
+    with get_db_connection() as conn:
+        n = conn.execute("SELECT COUNT(*) FROM manager_questions").fetchone()[0]
+    print("manager_questions count =", n)
 
+    
     txt_col = pick_text_column("manager_questions")
     with get_db_connection() as conn:
         questions = conn.execute(
