@@ -2,17 +2,181 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تکمیل شده</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    body { font-family: Vazirmatn, sans-serif; background:#f5f6fa; padding:40px; text-align:center; }
-    .msg { background:white; padding:25px; border-radius:10px; max-width:600px; margin:auto; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Vazirmatn','Vazir',sans-serif;
+    }
+
+    body{
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      min-height:100vh;
+      padding:20px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      color:#333;
+    }
+
+    .container{
+      width:100%;
+      max-width:720px;
+      background:#fff;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 15px 50px rgba(0,0,0,0.2);
+      animation: fadeIn .8s ease;
+    }
+
+    .header{
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      padding:26px 28px;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .header::before{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
+
+    .header h2{
+      position:relative;
+      z-index:2;
+      font-size:1.8rem;
+      text-shadow:0 2px 4px rgba(0,0,0,0.2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:0;
+    }
+
+    .content{
+      padding:26px 28px;
+      text-align:center;
+    }
+
+    .note{
+      background:#f0f7ff;
+      border-radius:15px;
+      padding:14px 14px;
+      border-left:4px solid #3498db;
+      color:#23395d;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      line-height:1.9;
+      margin: 0 auto 16px;
+      text-align:right;
+    }
+
+    .note i{
+      color:#3498db;
+      margin-top:2px;
+    }
+
+    p{
+      color:#516070;
+      line-height:1.9;
+      margin-top:8px;
+      margin-bottom:18px;
+      font-size:1rem;
+    }
+
+    .btn{
+      width:100%;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-decoration:none;
+      background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
+      color:#fff;
+      border:none;
+      padding:16px;
+      font-size:1.05rem;
+      font-weight:600;
+      border-radius:12px;
+      cursor:pointer;
+      transition: all .3s ease;
+      box-shadow:0 4px 15px rgba(26, 41, 128, 0.2);
+    }
+
+    .btn:hover{
+      transform: translateY(-3px);
+      box-shadow:0 7px 20px rgba(26, 41, 128, 0.3);
+    }
+
+    .footer-note{
+      text-align:center;
+      margin-top:14px;
+      color:#7f8c8d;
+      font-size:0.9rem;
+      line-height:1.9;
+    }
+
+    @keyframes fadeIn{
+      from{ opacity:0; transform: translateY(20px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    @media (max-width:768px){
+      .header h2{ font-size:1.5rem; }
+      .content{ padding:20px; }
+    }
+
+    @media (max-width:480px){
+      body{ padding:10px; }
+      .container{ border-radius:15px; }
+      .header{ padding:20px; }
+      .header h2{ font-size:1.3rem; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="msg">
-    <h2>این پس‌آزمون را قبلاً تکمیل کرده‌اید.</h2>
-    <p>با تشکر از همکاری شما.</p>
-    <a href="{{ url_for('result') }}">بازگشت به نتیجه آزمون</a>
+  <div class="container">
+    <div class="header">
+      <h2><i class="fas fa-circle-check"></i> تکمیل شده</h2>
+    </div>
+
+    <div class="content">
+      <div class="note">
+        <i class="fas fa-circle-info"></i>
+        <div>
+          این پس‌آزمون قبلاً توسط شما تکمیل شده است.
+        </div>
+      </div>
+
+      <p>با تشکر از همکاری شما.</p>
+
+      <a class="btn" href="{{ url_for('result') }}">
+        <i class="fas fa-arrow-left"></i>
+        بازگشت به نتیجه آزمون
+      </a>
+
+      <div class="footer-note">
+        در صورت نیاز می‌توانید نتیجه آزمون را مجدداً مشاهده کنید.
+      </div>
+    </div>
   </div>
 </body>
 </html>
